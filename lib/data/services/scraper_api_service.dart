@@ -6,7 +6,7 @@ import '../models/game_model.dart';
 class ScraperApiService {
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: ScraperConfig.baseUrl,
+      baseUrl: ScraperConfig.scraperApiUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 30),
       headers: {

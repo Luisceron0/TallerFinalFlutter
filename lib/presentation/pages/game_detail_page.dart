@@ -1,0 +1,540 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../core/constants/app_colors.dart';
+import '../controllers/game_controller.dart';
+import '../controllers/auth_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class GameDetailPage extends StatefulWidget {
+  final dynamic game;
+
+  const GameDetailPage({super.key, required this.game});
+
+  @override
+  State<GameDetailPage> createState() => _GameDetailPageState();
+}
+
+class _GameDetailPageState extends State<GameDetailPage> {
+  final GameController _gameController = Get.find<GameController>();
+  final AuthController _authController = Get.find<AuthController>();
+  final SupabaseClient _client = Supabase.instance.client;
+
+  bool _isInWishlist = false;
+  bool _isLoadingWishlist = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkWishlistStatus();
+  }
+
+  Future<void> _checkWishlistStatus() async {
+    try {
+      final user = _client.auth.currentUser;
+      if (user != null) {
+        final response = await _client
+            .from('wishlist')
+            .select()
+            .eq('user_id', user.id)
+            .eq('game_id', widget.game.id)
+            .single();
+
+        setState(() => _isInWishlist = true);
+      }
+    } catch (e) {
+      // Game not in wishlist
+      setState(() => _isInWishlist = false);
+    }
+  }
+
+  Widget _buildPriceComparison() {
+    final prices = widget.game.prices ?? {};
+
+    if (prices.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.lightPurple,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.primaryPurple.withOpacity(0.3),
+          ),
+        ),
+        child: const Column(
+          children: [
+            Icon(
+              Icons.store,
+              color: AppColors.primaryPurple,
+              size: 32,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Precios no disponibles',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.primaryPurple,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Extract prices
+    final steamPrice = prices['steam'];
+    final epicPrice = prices['epic'];
+
+    // Find best price
+    double? bestPrice;
+    String bestStore = '';
+
+    if (steamPrice != null && steamPrice['price'] != null && !steamPrice['is_free']) {
+      bestPrice = steamPrice['price'];
+      bestStore = 'Steam';
+    }
+
+    if (epicPrice != null && epicPrice['price'] != null && !epicPrice['is_free']) {
+      if (bestPrice == null || epicPrice['price'] < bestPrice) {
+        bestPrice = epicPrice['price'];
+        bestStore = 'Epic';
+      }
+    }
+
+    return Column(
+      children: [
+        // Best deal highlight
+        if (bestPrice != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.green.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.local_offer,
+                  color: Colors.green,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Mejor precio en $bestStore: ${bestPrice.toStringAsFixed(2)}€',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // Price cards
+        Row(
+          children: [
+            // Steam price
+            if (steamPrice != null) ...[
+              Expanded(
+                child: _buildStorePriceCard(
+                  'Steam',
+                  steamPrice,
+                  isBest: bestStore == 'Steam',
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+
+            // Epic price
+            if (epicPrice != null) ...[
+              Expanded(
+                child: _buildStorePriceCard(
+                  'Epic',
+                  epicPrice,
+                  isBest: bestStore == 'Epic',
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStorePriceCard(String store, Map<String, dynamic> priceData, {bool isBest = false}) {
+    final price = priceData['price'];
+    final discountPercent = priceData['discount_percent'] ?? 0;
+    final isFree = priceData['is_free'] ?? false;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isBest ? Colors.green.withOpacity(0.1) : AppColors.surfaceColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isBest ? Colors.green.withOpacity(0.3) : AppColors.primaryPurple.withOpacity(0.2),
+          width: isBest ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          // Store name
+          Text(
+            store,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: isBest ? Colors.green : AppColors.primaryText,
+            ),
+          ),
+          const SizedBox(height: 4),
+
+          // Price
+          if (isFree) ...[
+            const Text(
+              'GRATIS',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
+          ] else if (price != null) ...[
+            Text(
+              '${price.toStringAsFixed(2)}€',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isBest ? Colors.green : AppColors.primaryText,
+              ),
+            ),
+          ] else ...[
+            const Text(
+              'N/A',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.secondaryText,
+              ),
+            ),
+          ],
+
+          // Discount
+          if (discountPercent > 0) ...[
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '-${discountPercent}%',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _toggleWishlist() async {
+    if (_isLoadingWishlist) return;
+
+    setState(() => _isLoadingWishlist = true);
+
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) {
+        Get.snackbar('Error', 'Debes iniciar sesión para usar la wishlist');
+        return;
+      }
+
+      if (_isInWishlist) {
+        // Remove from wishlist
+        await _client
+            .from('wishlist')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('game_id', widget.game.id);
+
+        setState(() => _isInWishlist = false);
+        Get.snackbar('Removido', 'Juego removido de tu wishlist');
+      } else {
+        // Add to wishlist
+        await _client.from('wishlist').insert({
+          'user_id': user.id,
+          'game_id': widget.game.id,
+          'target_price': null,
+          'priority': 3,
+        });
+
+        setState(() => _isInWishlist = true);
+        Get.snackbar('Agregado', 'Juego agregado a tu wishlist');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'No se pudo actualizar la wishlist: $e');
+    } finally {
+      setState(() => _isLoadingWishlist = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundColor,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header with back button and wishlist toggle
+            Container(
+              decoration: const BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                      onPressed: () => Get.back(),
+                    ),
+                    Expanded(
+                      child: Text(
+                        widget.game.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        _isInWishlist ? Icons.favorite : Icons.favorite_border,
+                        color: _isInWishlist ? Colors.red : Colors.white,
+                        size: 28,
+                      ),
+                      onPressed: _isLoadingWishlist ? null : _toggleWishlist,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Game details content
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Game image
+                      Center(
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceColor,
+                            borderRadius: BorderRadius.circular(16),
+                            image: widget.game.imageUrl != null
+                                ? DecorationImage(
+                                    image: NetworkImage(widget.game.imageUrl!),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
+                          ),
+                          child: widget.game.imageUrl == null
+                              ? const Icon(
+                                  Icons.gamepad,
+                                  color: AppColors.primaryNeon,
+                                  size: 80,
+                                )
+                              : null,
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Game title
+                      Text(
+                        widget.game.title,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryText,
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Description
+                      if (widget.game.description != null) ...[
+                        const Text(
+                          'Descripción',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryText,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.game.description!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: AppColors.secondaryText,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Price comparison section
+                      const Text(
+                        'Precios',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryText,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Enhanced price comparison
+                      _buildPriceComparison(),
+
+                      const SizedBox(height: 16),
+
+                      // AI Insight section
+                      if (widget.game.aiInsight != null) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryNeon.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.primaryNeon.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.lightbulb,
+                                    color: AppColors.primaryNeon,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Insight IA',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primaryText,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                widget.game.aiInsight!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.secondaryText,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      const SizedBox(height: 24),
+
+                      // Action buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                // TODO: Implement price tracking
+                                Get.snackbar('Próximamente', 'Seguimiento de precios próximamente');
+                              },
+                              icon: const Icon(Icons.track_changes),
+                              label: const Text('Seguir Precio'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryPurple,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                // TODO: Implement sharing
+                                Get.snackbar('Próximamente', 'Compartir próximamente');
+                              },
+                              icon: const Icon(Icons.share),
+                              label: const Text('Compartir'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primaryPurple,
+                                side: const BorderSide(color: AppColors.primaryPurple),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

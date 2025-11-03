@@ -29,6 +29,11 @@ class AppColors {
   static const Color discountColor = Color(0xFFFF6B35); // Orange-red for discounts
   static const Color bestPriceColor = Color(0xFF00FF88); // Green for best price
 
+  // Legacy colors for compatibility
+  static const Color primaryPurple = Color(0xFF6366F1); // Indigo
+  static const Color lightPurple = Color(0xFFA5B4FC); // Light indigo
+  static const Color pendingTask = Color(0xFFFFA500); // Orange
+
   // Gradient colors - Gaming style
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,

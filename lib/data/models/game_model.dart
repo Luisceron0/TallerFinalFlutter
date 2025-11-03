@@ -9,8 +9,8 @@ class GameModel extends GameEntity {
     super.epicSlug,
     super.description,
     super.imageUrl,
-    super.createdAt,
-    super.updatedAt,
+    required super.createdAt,
+    required super.updatedAt,
   });
 
   factory GameModel.fromJson(Map<String, dynamic> json) {

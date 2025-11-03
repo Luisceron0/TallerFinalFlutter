@@ -39,11 +39,11 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
         fontFamily: 'SF Pro Display',
-        cardTheme: CardTheme(
+        cardTheme: const CardThemeData(
           color: AppColors.cardBackground,
           elevation: 4,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.all(Radius.circular(16)),
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(

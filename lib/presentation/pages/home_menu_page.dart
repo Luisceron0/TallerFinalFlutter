@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/constants/app_colors.dart';
-import 'home_page.dart';
-import 'maps_page.dart';
+import 'game_search_page.dart';
+import 'wishlist_page.dart';
+import 'notifications_page.dart';
 
 class HomeMenuPage extends StatelessWidget {
   const HomeMenuPage({super.key});
@@ -55,17 +56,24 @@ class HomeMenuPage extends StatelessWidget {
                   child: Column(
                     children: [
                       _HomeOptionCard(
-                        icon: Icons.check_circle_outline,
-                        title: 'ToDo',
-                        subtitle: 'Gestiona tus tareas diarias',
-                        onTap: () => Get.to(() => const HomePage()),
+                        icon: Icons.search,
+                        title: 'Buscar Juegos',
+                        subtitle: 'Encuentra juegos y compara precios',
+                        onTap: () => Get.to(() => const GameSearchPage()),
                       ),
                       const SizedBox(height: 16),
                       _HomeOptionCard(
-                        icon: Icons.map_outlined,
-                        title: 'Mapas',
-                        subtitle: 'Ubica y guarda puntos en el mapa',
-                        onTap: () => Get.to(() => const MapsPage()),
+                        icon: Icons.favorite_border,
+                        title: 'Wishlist',
+                        subtitle: 'Gestiona tu lista de deseos',
+                        onTap: () => Get.to(() => const WishlistPage()),
+                      ),
+                      const SizedBox(height: 16),
+                      _HomeOptionCard(
+                        icon: Icons.notifications_none,
+                        title: 'Notificaciones',
+                        subtitle: 'Ve tus alertas y notificaciones',
+                        onTap: () => Get.to(() => const NotificationsPage()),
                       ),
                     ],
                   ),
