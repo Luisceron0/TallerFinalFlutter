@@ -7,6 +7,9 @@ playwright==1.40.0
 beautifulsoup4==4.12.2
 aiohttp==3.9.1
 
+# HTTP client (for Supabase compatibility)
+httpx==0.24.1
+
 # Database
 supabase==2.3.0
 
