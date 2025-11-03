@@ -7,8 +7,8 @@ class ScraperApiService {
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: ScraperConfig.scraperApiUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: Duration(seconds: ScraperConfig.searchTimeout),
+      receiveTimeout: Duration(seconds: ScraperConfig.searchTimeout),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -71,6 +71,9 @@ class ScraperApiService {
           'user_id': userId,
           'game_ids': gameIds,
         },
+        options: Options(
+          receiveTimeout: Duration(seconds: ScraperConfig.refreshTimeout),
+        ),
       );
 
       return response.data;
