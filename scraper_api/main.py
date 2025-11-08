@@ -217,7 +217,7 @@ def search_epic_games(query: str) -> List[Dict[str, Any]]:
             current_price_usd = discount_price if discount_price > 0 else original_price
             current_price_usd = current_price_usd / 100 if current_price_usd > 0 else 0
 
-            # Convert USD to COP (approximate exchange rate)
+            # Convert USD to COP (exchange rate: 1 USD = 4000 COP)
             cop_price = current_price_usd * 4000 if current_price_usd > 0 else 0
 
             # Get image URL

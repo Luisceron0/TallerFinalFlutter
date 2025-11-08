@@ -127,7 +127,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Mejor precio en $bestStore: ${bestPrice.toStringAsFixed(2)}€',
+                    'Mejor precio en $bestStore: \$${bestPrice.toStringAsFixed(0)}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -212,7 +212,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
             ),
           ] else if (price != null) ...[
             Text(
-              '${price.toStringAsFixed(2)}€',
+              '\$${price.toStringAsFixed(0)}',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -488,24 +488,6 @@ class _GameDetailPageState extends State<GameDetailPage> {
                       // Action buttons
                       Row(
                         children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                // TODO: Implement price tracking
-                                Get.snackbar('Próximamente', 'Seguimiento de precios próximamente');
-                              },
-                              icon: const Icon(Icons.track_changes),
-                              label: const Text('Seguir Precio'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryPurple,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: OutlinedButton.icon(
