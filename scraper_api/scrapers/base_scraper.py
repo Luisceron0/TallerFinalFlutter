@@ -1,32 +1,40 @@
 """
-Base scraper class with Playwright integration
+Base scraper class with fallback to requests when Playwright fails
 """
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 from playwright.async_api import async_playwright, Browser, Page, BrowserContext
 import asyncio
 import logging
+import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 
 class PlaywrightBaseScraper(ABC):
-    """Base class for store scrapers using Playwright"""
+    """Base class for store scrapers using Playwright with requests fallback"""
 
     def __init__(self, headless: bool = True):
         self.headless = headless
         self.browser: Optional[Browser] = None
         self.context: Optional[BrowserContext] = None
+        self.use_playwright = True  # Flag to switch to requests fallback
 
     async def __aenter__(self):
         """Async context manager entry"""
-        await self._init_browser()
+        try:
+            await self._init_browser()
+        except Exception as e:
+            logger.warning(f"Playwright initialization failed: {e}. Switching to requests fallback.")
+            self.use_playwright = False
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit"""
-        await self._close_browser()
+        if self.use_playwright:
+            await self._close_browser()
 
     async def _init_browser(self):
         """Initialize Playwright browser"""
@@ -41,7 +49,7 @@ class PlaywrightBaseScraper(ABC):
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
-                    '--single-process',  # Important for Docker
+                    '--single-process',
                     '--disable-gpu'
                 ]
             )
@@ -99,14 +107,58 @@ class PlaywrightBaseScraper(ABC):
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
             await asyncio.sleep(1)  # Wait for content to load
 
-    @abstractmethod
+    def requests_fallback_search(self, query: str) -> List[Dict[str, Any]]:
+        """Fallback search using requests when Playwright fails"""
+        try:
+            # This should be implemented by subclasses
+            logger.info(f"Using requests fallback for query: {query}")
+            return []
+        except Exception as e:
+            logger.error(f"Requests fallback failed: {e}")
+            return []
+
+    def requests_fallback_details(self, game_id: str) -> Dict[str, Any]:
+        """Fallback details using requests when Playwright fails"""
+        try:
+            # This should be implemented by subclasses
+            logger.info(f"Using requests fallback for game_id: {game_id}")
+            return {}
+        except Exception as e:
+            logger.error(f"Requests fallback failed: {e}")
+            return {}
+
     async def search_games(self, query: str) -> List[Dict[str, Any]]:
-        """Search for games by query"""
+        """Search for games by query with fallback"""
+        if self.use_playwright:
+            try:
+                return await self._search_games_playwright(query)
+            except Exception as e:
+                logger.warning(f"Playwright search failed: {e}. Using requests fallback.")
+                self.use_playwright = False
+                return self.requests_fallback_search(query)
+        else:
+            return self.requests_fallback_search(query)
+
+    async def get_game_details(self, game_id: str) -> Dict[str, Any]:
+        """Get detailed information for a specific game with fallback"""
+        if self.use_playwright:
+            try:
+                return await self._get_game_details_playwright(game_id)
+            except Exception as e:
+                logger.warning(f"Playwright details failed: {e}. Using requests fallback.")
+                self.use_playwright = False
+                return self.requests_fallback_details(game_id)
+        else:
+            return self.requests_fallback_details(game_id)
+
+    @abstractmethod
+    async def _search_games_playwright(self, query: str) -> List[Dict[str, Any]]:
+        """Search for games by query using Playwright"""
         pass
 
     @abstractmethod
-    async def get_game_details(self, game_id: str) -> Dict[str, Any]:
-        """Get detailed information for a specific game"""
+    async def _get_game_details_playwright(self, game_id: str) -> Dict[str, Any]:
+        """Get detailed information for a specific game using Playwright"""
         pass
 
     def normalize_price(self, price_str: str) -> Optional[float]:

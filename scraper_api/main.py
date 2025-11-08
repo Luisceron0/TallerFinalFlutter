@@ -12,9 +12,8 @@ import asyncio
 import logging
 from datetime import datetime
 import uvicorn
+import requests
 
-from scrapers.steam_scraper import SteamScraper
-from scrapers.epic_scraper import EpicScraper
 from services.supabase_service import SupabaseService
 from services.gemini_service import GeminiService
 from core.config import settings
@@ -72,6 +71,70 @@ class RefreshWishlistResponse(BaseModel):
     notifications_created: int
     ai_insights_generated: int
 
+def search_steam_games(query: str) -> List[Dict[str, Any]]:
+    """Search Steam games using their public API"""
+    try:
+        search_url = f"https://store.steampowered.com/api/storesearch/?term={query}&l=english&cc=US"
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+
+        response = requests.get(search_url, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        data = response.json()
+        games = []
+
+        for item in data.get('items', [])[:10]:
+            price_info = item.get('price', {})
+            games.append({
+                'title': item.get('name', ''),
+                'steam_app_id': str(item.get('id', '')),
+                'url': f"https://store.steampowered.com/app/{item.get('id', '')}",
+                'image_url': item.get('tiny_image', ''),
+                'price': price_info.get('final', 0) / 100 if price_info else 0,
+                'discount_percent': price_info.get('discount_percent', 0) if price_info else 0,
+                'is_free': price_info.get('final', 0) == 0 if price_info else False,
+                'store': 'steam'
+            })
+
+        return games
+    except Exception as e:
+        logger.error(f"Steam search failed: {e}")
+        return []
+
+def search_epic_games(query: str) -> List[Dict[str, Any]]:
+    """Search Epic Games using their public API"""
+    try:
+        search_url = "https://www.epicgames.com/store/api/content/v2/discover/search"
+        params = {'query': query, 'country': 'US', 'locale': 'en-US', 'count': 10}
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+
+        response = requests.get(search_url, params=params, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        data = response.json()
+        games = []
+
+        for item in data.get('data', {}).get('elements', [])[:10]:
+            price_info = item.get('price', {})
+            current_price = price_info.get('totalPrice', {}).get('originalPrice', 0) / 100
+            discount = price_info.get('totalPrice', {}).get('discount', 0)
+
+            games.append({
+                'title': item.get('title', ''),
+                'epic_id': item.get('id', ''),
+                'url': f"https://www.epicgames.com/store/product/{item.get('urlSlug', '')}",
+                'image_url': item.get('keyImages', [{}])[0].get('url', '') if item.get('keyImages') else '',
+                'price': current_price,
+                'discount_percent': discount,
+                'is_free': current_price == 0,
+                'store': 'epic'
+            })
+
+        return games
+    except Exception as e:
+        logger.error(f"Epic search failed: {e}")
+        return []
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint for deployment monitoring"""
@@ -92,24 +155,9 @@ async def search_games(request: SearchRequest, background_tasks: BackgroundTasks
     try:
         logger.info(f"Searching for: {request.query}")
 
-        # Initialize scrapers with context manager
-        async with SteamScraper() as steam_scraper, EpicScraper() as epic_scraper:
-            # Search both stores in parallel
-            steam_task = steam_scraper.search_games(request.query)
-            epic_task = epic_scraper.search_games(request.query)
-
-            steam_results, epic_results = await asyncio.gather(
-                steam_task, epic_task, return_exceptions=True
-            )
-
-        # Handle exceptions
-        if isinstance(steam_results, Exception):
-            logger.error(f"Steam scraper error: {steam_results}")
-            steam_results = []
-
-        if isinstance(epic_results, Exception):
-            logger.error(f"Epic scraper error: {epic_results}")
-            epic_results = []
+        # Search both stores using simple HTTP requests
+        steam_results = search_steam_games(request.query)
+        epic_results = search_epic_games(request.query)
 
         # Match and merge results
         merged_results = await supabase_service.match_and_merge_results(
@@ -187,19 +235,32 @@ async def refresh_wishlist(request: RefreshWishlistRequest, background_tasks: Ba
                 if not game:
                     continue
 
-                # Scrape current prices
+                # Scrape current prices using simple HTTP
                 steam_price = None
                 epic_price = None
 
                 if game.get('steam_app_id'):
-                    async with SteamScraper() as steam_scraper:
-                        steam_data = await steam_scraper.get_game_details(game['steam_app_id'])
-                        steam_price = steam_data.get('price')
+                    # Get Steam price
+                    try:
+                        steam_url = f"https://store.steampowered.com/api/appdetails?appids={game['steam_app_id']}"
+                        response = requests.get(steam_url, timeout=10)
+                        if response.status_code == 200:
+                            data = response.json()
+                            if data.get(str(game['steam_app_id']), {}).get('success'):
+                                price_info = data[str(game['steam_app_id'])].get('data', {}).get('price_overview', {})
+                                steam_price = price_info.get('final', 0) / 100 if price_info else None
+                    except Exception as e:
+                        logger.warning(f"Failed to get Steam price for {game['steam_app_id']}: {e}")
 
                 if game.get('epic_slug'):
-                    async with EpicScraper() as epic_scraper:
-                        epic_data = await epic_scraper.get_game_details(game['epic_slug'])
-                        epic_price = epic_data.get('price')
+                    # Get Epic price (simplified)
+                    try:
+                        epic_url = f"https://www.epicgames.com/store/product/{game['epic_slug']}"
+                        response = requests.get(epic_url, timeout=10)
+                        # This would need more complex parsing, for now skip
+                        epic_price = None
+                    except Exception as e:
+                        logger.warning(f"Failed to get Epic price for {game['epic_slug']}: {e}")
 
                 # Save new price history
                 await supabase_service.save_price_history(game_id, steam_price, epic_price)

@@ -23,3 +23,7 @@ pydantic-settings==2.1.0
 
 # Utilities
 asyncio-mqtt==0.16.1  # For potential future features
+
+# Alternative scraping approach (fallback)
+requests==2.31.0
+lxml==4.9.3
