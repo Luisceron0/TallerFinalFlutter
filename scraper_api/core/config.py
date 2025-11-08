@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     # Gemini AI
     gemini_api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
 
+    # Scraper API URL (for self-reference if needed)
+    scraper_api_url: Optional[str] = os.getenv("SCRAPER_API_URL")
+
     # Scraping settings
     max_concurrent_requests: int = 2  # Don't overwhelm stores
     request_timeout: int = 30  # seconds
