@@ -13,7 +13,7 @@ class EpicScraper(PlaywrightBaseScraper):
     """Scraper for Epic Games Store"""
 
     BASE_URL = "https://store.epicgames.com"
-    EXCHANGE_RATE_EUR_TO_COP = 5000  # Exchange rate: 1 EUR = 5000 COP (Epic shows prices in EUR)
+    EXCHANGE_RATE_EUR_TO_COP = 0.5  # Exchange rate: 1 EUR = 0.5 COP (for display purposes)
 
     async def search_games(self, query: str) -> List[Dict[str, Any]]:
         """Search Epic Games store for games"""

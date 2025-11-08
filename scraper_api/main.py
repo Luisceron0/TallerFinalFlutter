@@ -88,7 +88,7 @@ def search_steam_games(query: str) -> List[Dict[str, Any]]:
             original_price_usd = price_info.get('final', 0) / 100 if price_info else 0
 
             # Convert USD to COP (approximate exchange rate)
-            cop_price = original_price_usd * 4000 if original_price_usd > 0 else 0
+            cop_price = original_price_usd * 0.4 if original_price_usd > 0 else 0
 
             games.append({
                 'title': item.get('name', ''),
@@ -217,8 +217,8 @@ def search_epic_games(query: str) -> List[Dict[str, Any]]:
             current_price_usd = discount_price if discount_price > 0 else original_price
             current_price_usd = current_price_usd / 100 if current_price_usd > 0 else 0
 
-            # Convert EUR to COP (exchange rate: 1 EUR = 5000 COP)
-            cop_price = current_price_usd * 5000 if current_price_usd > 0 else 0
+            # Convert EUR to COP (exchange rate: 1 EUR = 0.5 COP)
+            cop_price = current_price_usd * 0.5 if current_price_usd > 0 else 0
 
             # Get image URL
             image_url = ''
