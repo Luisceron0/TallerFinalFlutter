@@ -15,6 +15,10 @@ void main() async {
 
     // Initialize Supabase
     await SupabaseConfig.initialize();
+
+    // Initialize other services that might need env vars
+    // ScraperApiService will be initialized when needed
+
     // Register global AuthController
     Get.put(AuthController(), permanent: true);
     runApp(const MyApp());

@@ -4,20 +4,41 @@ import '../../domain/entities/game_entity.dart';
 import '../models/game_model.dart';
 
 class ScraperApiService {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: ScraperConfig.scraperApiUrl,
-      connectTimeout: Duration(seconds: ScraperConfig.searchTimeout),
-      receiveTimeout: Duration(seconds: ScraperConfig.searchTimeout),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ),
-  );
+  late final Dio _dio;
 
   ScraperApiService() {
-    _setupInterceptors();
+    _initializeDio();
+  }
+
+  void _initializeDio() {
+    try {
+      _dio = Dio(
+        BaseOptions(
+          baseUrl: ScraperConfig.scraperApiUrl,
+          connectTimeout: Duration(seconds: ScraperConfig.searchTimeout),
+          receiveTimeout: Duration(seconds: ScraperConfig.searchTimeout),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+      _setupInterceptors();
+    } catch (e) {
+      // If SCRAPER_API_URL is not configured, create Dio without baseUrl
+      // This will cause requests to fail gracefully
+      _dio = Dio(
+        BaseOptions(
+          connectTimeout: Duration(seconds: ScraperConfig.searchTimeout),
+          receiveTimeout: Duration(seconds: ScraperConfig.searchTimeout),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+      _setupInterceptors();
+    }
   }
 
   void _setupInterceptors() {
