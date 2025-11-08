@@ -29,10 +29,10 @@ class GameRepositoryImpl implements GameRepository {
   @override
   Future<List<GameEntity>> getPopularGames() async {
     try {
-      // Obtener juegos populares de las últimas búsquedas
+      // Obtener juegos populares de las últimas búsquedas con precios
       final response = await _client
           .from('games')
-          .select()
+          .select('*, price_history(*)')
           .order('created_at', ascending: false)
           .limit(20);
 
@@ -49,7 +49,7 @@ class GameRepositoryImpl implements GameRepository {
     try {
       final response = await _client
           .from('games')
-          .select()
+          .select('*, price_history(*)')
           .eq('id', gameId)
           .single();
 

@@ -109,35 +109,139 @@ def search_steam_games(query: str) -> List[Dict[str, Any]]:
 def search_epic_games(query: str) -> List[Dict[str, Any]]:
     """Search Epic Games using their public API"""
     try:
-        search_url = "https://www.epicgames.com/store/api/content/v2/discover/search"
-        params = {'query': query, 'country': 'CO', 'locale': 'es-CO', 'count': 10}
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        # Use Epic's GraphQL API for better results
+        search_url = "https://www.epicgames.com/graphql"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Content-Type': 'application/json',
+        }
 
-        response = requests.get(search_url, params=params, headers=headers, timeout=10)
+        # GraphQL query for searching games
+        graphql_query = {
+            "query": """
+            query searchStoreQuery($category: String, $count: Int, $country: String!, $keywords: String, $locale: String, $sortBy: String, $sortDir: String, $start: Int, $tag: String, $withPrice: Boolean = true) {
+              Catalog {
+                searchStore(
+                  category: $category
+                  count: $count
+                  country: $country
+                  keywords: $keywords
+                  locale: $locale
+                  sortBy: $sortBy
+                  sortDir: $sortDir
+                  start: $start
+                  tag: $tag
+                  withPrice: $withPrice
+                ) {
+                  elements {
+                    title
+                    id
+                    namespace
+                    description
+                    effectiveDate
+                    keyImages {
+                      type
+                      url
+                    }
+                    price(country: $country) {
+                      totalPrice {
+                        discountPrice
+                        originalPrice
+                        voucherDiscount
+                        discount
+                        fmtPrice(locale: $locale) {
+                          originalPrice
+                          discountPrice
+                          intermediatePrice
+                        }
+                      }
+                    }
+                    promotions {
+                      promotionalOffers {
+                        promotionalOffers {
+                          discountSetting {
+                            discountType
+                            discountPercentage
+                          }
+                          startDate
+                          endDate
+                        }
+                      }
+                    }
+                    urlSlug
+                    url
+                    tags {
+                      id
+                    }
+                    categories {
+                      path
+                    }
+                  }
+                  paging {
+                    count
+                    total
+                  }
+                }
+              }
+            }
+            """,
+            "variables": {
+                "category": "games",
+                "count": 10,
+                "country": "CO",
+                "keywords": query,
+                "locale": "es-CO",
+                "sortBy": "relevancy",
+                "sortDir": "DESC",
+                "start": 0,
+                "withPrice": True
+            }
+        }
+
+        response = requests.post(search_url, json=graphql_query, headers=headers, timeout=15)
         response.raise_for_status()
 
         data = response.json()
         games = []
 
-        for item in data.get('data', {}).get('elements', [])[:10]:
-            price_info = item.get('price', {})
-            current_price_usd = price_info.get('totalPrice', {}).get('originalPrice', 0) / 100
-            discount = price_info.get('totalPrice', {}).get('discount', 0)
+        elements = data.get('data', {}).get('Catalog', {}).get('searchStore', {}).get('elements', [])
+
+        for item in elements[:10]:
+            # Extract price information
+            price_info = item.get('price', {}).get('totalPrice', {})
+            original_price = price_info.get('originalPrice', 0)
+            discount_price = price_info.get('discountPrice', 0)
+            discount = price_info.get('discount', 0)
+
+            # Use discount price if available, otherwise original price
+            current_price_usd = discount_price if discount_price > 0 else original_price
+            current_price_usd = current_price_usd / 100 if current_price_usd > 0 else 0
 
             # Convert USD to COP (approximate exchange rate)
             cop_price = current_price_usd * 4000 if current_price_usd > 0 else 0
 
+            # Get image URL
+            image_url = ''
+            key_images = item.get('keyImages', [])
+            for img in key_images:
+                if img.get('type') == 'Thumbnail':
+                    image_url = img.get('url', '')
+                    break
+            if not image_url and key_images:
+                image_url = key_images[0].get('url', '')
+
             games.append({
                 'title': item.get('title', ''),
                 'epic_slug': item.get('urlSlug', ''),
-                'url': f"https://www.epicgames.com/store/product/{item.get('urlSlug', '')}",
-                'image_url': item.get('keyImages', [{}])[0].get('url', '') if item.get('keyImages') else '',
+                'url': item.get('url', ''),
+                'image_url': image_url,
                 'price': cop_price,
                 'discount_percent': discount,
                 'is_free': current_price_usd == 0,
                 'store': 'epic'
             })
 
+        logger.info(f"Found {len(games)} games on Epic for query: {query}")
         return games
     except Exception as e:
         logger.error(f"Epic search failed: {e}")
