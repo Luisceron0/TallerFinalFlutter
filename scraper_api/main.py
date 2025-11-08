@@ -88,7 +88,7 @@ def search_steam_games(query: str) -> List[Dict[str, Any]]:
             original_price_usd = price_info.get('final', 0) / 100 if price_info else 0
 
             # Convert USD to COP (approximate exchange rate)
-            cop_price = original_price_usd * 0.4 if original_price_usd > 0 else 0
+            cop_price = original_price_usd * 4000 if original_price_usd > 0 else 0
 
             games.append({
                 'title': item.get('name', ''),

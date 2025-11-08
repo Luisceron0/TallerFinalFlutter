@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../controllers/game_controller.dart';
 import '../controllers/auth_controller.dart';
@@ -127,12 +128,14 @@ class _GameDetailPageState extends State<GameDetailPage> {
     final discountPercent = priceData['discount_percent'] ?? 0;
 
     return ElevatedButton(
-      onPressed: () {
+      onPressed: () async {
         if (url != null && url.isNotEmpty) {
-          // Open URL in browser
-          Get.snackbar('Abriendo tienda', 'Redirigiendo a $store...');
-          // You might want to use url_launcher package here
-          // launchUrl(Uri.parse(url));
+          final Uri uri = Uri.parse(url);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          } else {
+            Get.snackbar('Error', 'No se pudo abrir la URL');
+          }
         }
       },
       style: ElevatedButton.styleFrom(
@@ -167,14 +170,6 @@ class _GameDetailPageState extends State<GameDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  store,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
                 Text(
                   '\$${price.toStringAsFixed(0)} COP',
                   style: const TextStyle(
