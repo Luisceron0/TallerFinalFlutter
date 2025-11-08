@@ -10,10 +10,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Load environment variables
-    await dotenv.load(fileName: ".env");
-
-    // Initialize Supabase
+    // Initialize Supabase (handles env loading internally)
     await SupabaseConfig.initialize();
 
     // Initialize other services that might need env vars

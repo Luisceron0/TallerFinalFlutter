@@ -13,8 +13,13 @@ class SupabaseConfig {
 
   static Future<void> initialize() async {
     try {
-      // Load environment variables
-      await dotenv.load(fileName: ".env");
+      // Load environment variables with error handling
+      try {
+        await dotenv.load(fileName: ".env");
+      } catch (e) {
+        print('Warning: Could not load .env file: $e');
+        // Continue without .env file - might be using system env vars
+      }
 
       final supabaseUrl = dotenv.env['SUPABASE_URL'];
       final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
