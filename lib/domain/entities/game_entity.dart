@@ -6,6 +6,8 @@ class GameEntity {
   final String? epicSlug;
   final String? description;
   final String? imageUrl;
+  final Map<String, dynamic>? prices;
+  final String? aiInsight;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -17,6 +19,8 @@ class GameEntity {
     this.epicSlug,
     this.description,
     this.imageUrl,
+    this.prices,
+    this.aiInsight,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -29,6 +33,8 @@ class GameEntity {
     String? epicSlug,
     String? description,
     String? imageUrl,
+    Map<String, dynamic>? prices,
+    String? aiInsight,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -40,6 +46,8 @@ class GameEntity {
       epicSlug: epicSlug ?? this.epicSlug,
       description: description ?? this.description,
       imageUrl: imageUrl ?? this.imageUrl,
+      prices: prices ?? this.prices,
+      aiInsight: aiInsight ?? this.aiInsight,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

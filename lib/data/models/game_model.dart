@@ -9,6 +9,8 @@ class GameModel extends GameEntity {
     super.epicSlug,
     super.description,
     super.imageUrl,
+    super.prices,
+    super.aiInsight,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -22,6 +24,8 @@ class GameModel extends GameEntity {
       epicSlug: json['epic_slug'] as String?,
       description: json['description'] as String?,
       imageUrl: json['image_url'] as String?,
+      prices: json['prices'] as Map<String, dynamic>?,
+      aiInsight: json['ai_insight'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -50,6 +54,8 @@ class GameModel extends GameEntity {
       epicSlug: epicSlug,
       description: description,
       imageUrl: imageUrl,
+      prices: prices,
+      aiInsight: aiInsight,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
@@ -64,6 +70,8 @@ class GameModel extends GameEntity {
       epicSlug: entity.epicSlug,
       description: entity.description,
       imageUrl: entity.imageUrl,
+      prices: entity.prices,
+      aiInsight: entity.aiInsight,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     );
