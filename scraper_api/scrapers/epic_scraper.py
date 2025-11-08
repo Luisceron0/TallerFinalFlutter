@@ -13,7 +13,7 @@ class EpicScraper(PlaywrightBaseScraper):
     """Scraper for Epic Games Store"""
 
     BASE_URL = "https://store.epicgames.com"
-    EXCHANGE_RATE_USD_TO_COP = 4000  # Exchange rate: 1 USD = 4000 COP
+    EXCHANGE_RATE_EUR_TO_COP = 5000  # Exchange rate: 1 EUR = 5000 COP (Epic shows prices in EUR)
 
     async def search_games(self, query: str) -> List[Dict[str, Any]]:
         """Search Epic Games store for games"""
@@ -200,9 +200,9 @@ class EpicScraper(PlaywrightBaseScraper):
             cleaned = cleaned.split(' - ')[0]
 
         try:
-            usd_price = float(cleaned)
-            # Convert USD to COP
-            cop_price = usd_price * self.EXCHANGE_RATE_USD_TO_COP
+            eur_price = float(cleaned)
+            # Convert EUR to COP (Epic shows prices in EUR)
+            cop_price = eur_price * self.EXCHANGE_RATE_EUR_TO_COP
             return cop_price
         except ValueError:
             logger.warning(f"Could not parse Epic price: {price_text}")

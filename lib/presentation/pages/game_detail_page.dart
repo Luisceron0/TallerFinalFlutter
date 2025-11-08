@@ -87,168 +87,130 @@ class _GameDetailPageState extends State<GameDetailPage> {
     final steamPrice = prices['steam'];
     final epicPrice = prices['epic'];
 
-    // Find best price
-    double? bestPrice;
-    String bestStore = '';
+    // Collect all available prices
+    List<Map<String, dynamic>> availablePrices = [];
 
     if (steamPrice != null && steamPrice['price'] != null && !steamPrice['is_free']) {
-      bestPrice = steamPrice['price'];
-      bestStore = 'Steam';
+      availablePrices.add({
+        'store': 'Steam',
+        'price': steamPrice['price'],
+        'url': steamPrice['url'],
+        'discount_percent': steamPrice['discount_percent'] ?? 0,
+      });
     }
 
     if (epicPrice != null && epicPrice['price'] != null && !epicPrice['is_free']) {
-      if (bestPrice == null || epicPrice['price'] < bestPrice) {
-        bestPrice = epicPrice['price'];
-        bestStore = 'Epic';
-      }
+      availablePrices.add({
+        'store': 'Epic',
+        'price': epicPrice['price'],
+        'url': epicPrice['url'],
+        'discount_percent': epicPrice['discount_percent'] ?? 0,
+      });
     }
 
     return Column(
       children: [
-        // Best deal highlight
-        if (bestPrice != null) ...[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Colors.green.withOpacity(0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.local_offer,
-                  color: Colors.green,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Mejor precio en $bestStore: \$${bestPrice.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-
         // Price cards
-        Row(
-          children: [
-            // Steam price
-            if (steamPrice != null) ...[
-              Expanded(
-                child: _buildStorePriceCard(
-                  'Steam',
-                  steamPrice,
-                  isBest: bestStore == 'Steam',
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-
-            // Epic price
-            if (epicPrice != null) ...[
-              Expanded(
-                child: _buildStorePriceCard(
-                  'Epic',
-                  epicPrice,
-                  isBest: bestStore == 'Epic',
-                ),
-              ),
-            ],
-          ],
-        ),
+        ...availablePrices.map((priceData) => Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 8),
+          child: _buildPriceCard(priceData),
+        )),
       ],
     );
   }
 
-  Widget _buildStorePriceCard(String store, Map<String, dynamic> priceData, {bool isBest = false}) {
+  Widget _buildPriceCard(Map<String, dynamic> priceData) {
+    final store = priceData['store'];
     final price = priceData['price'];
+    final url = priceData['url'];
     final discountPercent = priceData['discount_percent'] ?? 0;
-    final isFree = priceData['is_free'] ?? false;
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isBest ? Colors.green.withOpacity(0.1) : AppColors.surfaceColor,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isBest ? Colors.green.withOpacity(0.3) : AppColors.primaryPurple.withOpacity(0.2),
-          width: isBest ? 2 : 1,
+    return ElevatedButton(
+      onPressed: () {
+        if (url != null && url.isNotEmpty) {
+          // Open URL in browser
+          Get.snackbar('Abriendo tienda', 'Redirigiendo a $store...');
+          // You might want to use url_launcher package here
+          // launchUrl(Uri.parse(url));
+        }
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.surfaceColor,
+        foregroundColor: AppColors.primaryText,
+        padding: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
+        elevation: 2,
       ),
-      child: Column(
+      child: Row(
         children: [
-          // Store name
-          Text(
-            store,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: isBest ? Colors.green : AppColors.primaryText,
+          // Store icon
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: store == 'Steam' ? Colors.blue.withOpacity(0.1) : Colors.purple.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              store == 'Steam' ? Icons.sports_esports : Icons.store,
+              color: store == 'Steam' ? Colors.blue : Colors.purple,
+              size: 24,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(width: 12),
 
-          // Price
-          if (isFree) ...[
-            const Text(
-              'GRATIS',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-            ),
-          ] else if (price != null) ...[
-            Text(
-              '\$${price.toStringAsFixed(0)}',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: isBest ? Colors.green : AppColors.primaryText,
-              ),
-            ),
-          ] else ...[
-            const Text(
-              'N/A',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.secondaryText,
-              ),
-            ),
-          ],
-
-          // Discount
-          if (discountPercent > 0) ...[
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                '-${discountPercent}%',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
+          // Price info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  store,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 2),
+                Text(
+                  '\$${price.toStringAsFixed(0)} COP',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryPurple,
+                  ),
+                ),
+                if (discountPercent > 0) ...[
+                  const SizedBox(height: 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '-${discountPercent}%',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
+          ),
+
+          // Arrow icon
+          const Icon(
+            Icons.arrow_forward_ios,
+            color: AppColors.primaryPurple,
+            size: 16,
+          ),
         ],
       ),
     );
