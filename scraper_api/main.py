@@ -92,17 +92,15 @@ async def search_games(request: SearchRequest, background_tasks: BackgroundTasks
     try:
         logger.info(f"Searching for: {request.query}")
 
-        # Initialize scrapers
-        steam_scraper = SteamScraper()
-        epic_scraper = EpicScraper()
+        # Initialize scrapers with context manager
+        async with SteamScraper() as steam_scraper, EpicScraper() as epic_scraper:
+            # Search both stores in parallel
+            steam_task = steam_scraper.search_games(request.query)
+            epic_task = epic_scraper.search_games(request.query)
 
-        # Search both stores in parallel
-        steam_task = steam_scraper.search_games(request.query)
-        epic_task = epic_scraper.search_games(request.query)
-
-        steam_results, epic_results = await asyncio.gather(
-            steam_task, epic_task, return_exceptions=True
-        )
+            steam_results, epic_results = await asyncio.gather(
+                steam_task, epic_task, return_exceptions=True
+            )
 
         # Handle exceptions
         if isinstance(steam_results, Exception):
@@ -184,10 +182,6 @@ async def refresh_wishlist(request: RefreshWishlistRequest, background_tasks: Ba
 
         for game_id in request.game_ids:
             try:
-                # Get current prices from both stores
-                steam_scraper = SteamScraper()
-                epic_scraper = EpicScraper()
-
                 # Get game details from database
                 game = await supabase_service.get_game_by_id(game_id)
                 if not game:
@@ -198,12 +192,14 @@ async def refresh_wishlist(request: RefreshWishlistRequest, background_tasks: Ba
                 epic_price = None
 
                 if game.get('steam_app_id'):
-                    steam_data = await steam_scraper.get_game_details(game['steam_app_id'])
-                    steam_price = steam_data.get('price')
+                    async with SteamScraper() as steam_scraper:
+                        steam_data = await steam_scraper.get_game_details(game['steam_app_id'])
+                        steam_price = steam_data.get('price')
 
                 if game.get('epic_slug'):
-                    epic_data = await epic_scraper.get_game_details(game['epic_slug'])
-                    epic_price = epic_data.get('price')
+                    async with EpicScraper() as epic_scraper:
+                        epic_data = await epic_scraper.get_game_details(game['epic_slug'])
+                        epic_price = epic_data.get('price')
 
                 # Save new price history
                 await supabase_service.save_price_history(game_id, steam_price, epic_price)

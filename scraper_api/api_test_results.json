@@ -1,0 +1,46 @@
+{
+  "summary": {
+    "total_tests": 4,
+    "passed_tests": 0,
+    "success_rate": "0.0%"
+  },
+  "results": [
+    {
+      "test": "health_check",
+      "success": false,
+      "error": "Cannot connect to host localhost:8000 ssl:default [El equipo remoto rechaz\u00f3 la conexi\u00f3n de red]"
+    },
+    {
+      "test": "search_games",
+      "success": false,
+      "error": "Cannot connect to host localhost:8000 ssl:default [El equipo remoto rechaz\u00f3 la conexi\u00f3n de red]"
+    },
+    {
+      "test": "refresh_wishlist",
+      "success": false,
+      "error": "Cannot connect to host localhost:8000 ssl:default [El equipo remoto rechaz\u00f3 la conexi\u00f3n de red]"
+    },
+    {
+      "test": "error_handling",
+      "success": false,
+      "subtests": [
+        {
+          "subtest": "empty_search",
+          "success": false,
+          "error": "Cannot connect to host localhost:8000 ssl:default [El equipo remoto rechaz\u00f3 la conexi\u00f3n de red]"
+        },
+        {
+          "subtest": "invalid_wishlist",
+          "success": false,
+          "error": "Cannot connect to host localhost:8000 ssl:default [El equipo remoto rechaz\u00f3 la conexi\u00f3n de red]"
+        },
+        {
+          "subtest": "nonexistent_endpoint",
+          "success": false,
+          "error": "Cannot connect to host localhost:8000 ssl:default [El equipo remoto rechaz\u00f3 la conexi\u00f3n de red]"
+        }
+      ]
+    }
+  ],
+  "timestamp": 1762570087.2797859
+}
