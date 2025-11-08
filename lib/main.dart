@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'presentation/pages/auth_gate.dart';
 import 'core/constants/app_colors.dart';
 import 'core/config/supabase_config.dart';
@@ -9,14 +10,17 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
+    // Load environment variables
+    await dotenv.load(fileName: ".env");
+
     // Initialize Supabase
     await SupabaseConfig.initialize();
     // Register global AuthController
     Get.put(AuthController(), permanent: true);
     runApp(const MyApp());
   } catch (e) {
-    // If Supabase initialization fails, show error and run app anyway
-    print('Error initializing Supabase: $e');
+    // If initialization fails, show error and run app anyway
+    print('Error initializing app: $e');
     runApp(const MyApp());
   }
 }
