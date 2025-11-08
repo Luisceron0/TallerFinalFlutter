@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/supabase_config.dart';
 
 class AuthController extends GetxController {
-  final SupabaseClient _client = SupabaseConfig.client;
+  SupabaseClient get _client => SupabaseConfig.client;
 
   final RxBool _isLoading = false.obs;
   final RxString _errorMessage = ''.obs;
