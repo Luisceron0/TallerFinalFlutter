@@ -9,16 +9,25 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final client = SupabaseConfig.client;
-    return StreamBuilder<AuthState>(
-      stream: client.auth.onAuthStateChange,
-      builder: (context, snapshot) {
-        final session = client.auth.currentSession;
-        if (session != null) {
-          return const HomeMenuPage();
-        }
-        return const AuthPage();
-      },
-    );
+    try {
+      final client = SupabaseConfig.client;
+      return StreamBuilder<AuthState>(
+        stream: client.auth.onAuthStateChange,
+        builder: (context, snapshot) {
+          final session = client.auth.currentSession;
+          if (session != null) {
+            return const HomeMenuPage();
+          }
+          return const AuthPage();
+        },
+      );
+    } catch (e) {
+      // If Supabase is not initialized, show loading or error
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
   }
 }
