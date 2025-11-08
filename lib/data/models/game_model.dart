@@ -17,17 +17,17 @@ class GameModel extends GameEntity {
 
   factory GameModel.fromJson(Map<String, dynamic> json) {
     return GameModel(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      normalizedTitle: json['normalized_title'] as String,
-      steamAppId: json['steam_app_id'] as String?,
-      epicSlug: json['epic_slug'] as String?,
-      description: json['description'] as String?,
-      imageUrl: json['image_url'] as String?,
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? 'Unknown Game',
+      normalizedTitle: json['normalized_title']?.toString() ?? '',
+      steamAppId: json['steam_app_id']?.toString(),
+      epicSlug: json['epic_slug']?.toString(),
+      description: json['description']?.toString(),
+      imageUrl: json['image_url']?.toString(),
       prices: json['prices'] as Map<String, dynamic>?,
-      aiInsight: json['ai_insight'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      aiInsight: json['ai_insight']?.toString(),
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : DateTime.now(),
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : DateTime.now(),
     );
   }
 

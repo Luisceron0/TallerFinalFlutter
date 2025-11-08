@@ -13,13 +13,13 @@ class PriceHistoryModel extends PriceHistoryEntity {
 
   factory PriceHistoryModel.fromJson(Map<String, dynamic> json) {
     return PriceHistoryModel(
-      id: json['id'] as String,
-      gameId: json['game_id'] as String,
-      store: json['store'] as String,
+      id: json['id']?.toString() ?? '',
+      gameId: json['game_id']?.toString() ?? '',
+      store: json['store']?.toString() ?? 'unknown',
       price: json['price'] != null ? (json['price'] as num).toDouble() : null,
       discountPercent: json['discount_percent'] as int? ?? 0,
       isFree: json['is_free'] as bool? ?? false,
-      scrapedAt: DateTime.parse(json['scraped_at'] as String),
+      scrapedAt: json['scraped_at'] != null ? DateTime.parse(json['scraped_at'] as String) : DateTime.now(),
     );
   }
 

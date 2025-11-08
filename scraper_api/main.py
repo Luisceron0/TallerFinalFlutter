@@ -74,7 +74,7 @@ class RefreshWishlistResponse(BaseModel):
 def search_steam_games(query: str) -> List[Dict[str, Any]]:
     """Search Steam games using their public API"""
     try:
-        search_url = f"https://store.steampowered.com/api/storesearch/?term={query}&l=english&cc=US"
+        search_url = f"https://store.steampowered.com/api/storesearch/?term={query}&l=english&cc=CO"
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 
         response = requests.get(search_url, headers=headers, timeout=10)
@@ -85,12 +85,17 @@ def search_steam_games(query: str) -> List[Dict[str, Any]]:
 
         for item in data.get('items', [])[:10]:
             price_info = item.get('price', {})
+            original_price_usd = price_info.get('final', 0) / 100 if price_info else 0
+
+            # Convert USD to COP (approximate exchange rate)
+            cop_price = original_price_usd * 4000 if original_price_usd > 0 else 0
+
             games.append({
                 'title': item.get('name', ''),
                 'steam_app_id': str(item.get('id', '')),
                 'url': f"https://store.steampowered.com/app/{item.get('id', '')}",
                 'image_url': item.get('tiny_image', ''),
-                'price': price_info.get('final', 0) / 100 if price_info else 0,
+                'price': cop_price,
                 'discount_percent': price_info.get('discount_percent', 0) if price_info else 0,
                 'is_free': price_info.get('final', 0) == 0 if price_info else False,
                 'store': 'steam'
@@ -105,7 +110,7 @@ def search_epic_games(query: str) -> List[Dict[str, Any]]:
     """Search Epic Games using their public API"""
     try:
         search_url = "https://www.epicgames.com/store/api/content/v2/discover/search"
-        params = {'query': query, 'country': 'US', 'locale': 'en-US', 'count': 10}
+        params = {'query': query, 'country': 'CO', 'locale': 'es-CO', 'count': 10}
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 
         response = requests.get(search_url, params=params, headers=headers, timeout=10)
@@ -116,17 +121,20 @@ def search_epic_games(query: str) -> List[Dict[str, Any]]:
 
         for item in data.get('data', {}).get('elements', [])[:10]:
             price_info = item.get('price', {})
-            current_price = price_info.get('totalPrice', {}).get('originalPrice', 0) / 100
+            current_price_usd = price_info.get('totalPrice', {}).get('originalPrice', 0) / 100
             discount = price_info.get('totalPrice', {}).get('discount', 0)
+
+            # Convert USD to COP (approximate exchange rate)
+            cop_price = current_price_usd * 4000 if current_price_usd > 0 else 0
 
             games.append({
                 'title': item.get('title', ''),
-                'epic_id': item.get('id', ''),
+                'epic_slug': item.get('urlSlug', ''),
                 'url': f"https://www.epicgames.com/store/product/{item.get('urlSlug', '')}",
                 'image_url': item.get('keyImages', [{}])[0].get('url', '') if item.get('keyImages') else '',
-                'price': current_price,
+                'price': cop_price,
                 'discount_percent': discount,
-                'is_free': current_price == 0,
+                'is_free': current_price_usd == 0,
                 'store': 'epic'
             })
 

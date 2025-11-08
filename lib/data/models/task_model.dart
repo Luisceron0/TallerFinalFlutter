@@ -14,14 +14,14 @@ class TaskModel extends TaskEntity {
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
     return TaskModel(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      date: DateTime.parse(json['date'] as String),
-      startTime: DateTime.parse(json['start_time'] as String),
-      endTime: DateTime.parse(json['end_time'] as String),
-      isCompleted: json['is_completed'] as bool,
-      imageUrl: json['image_url'] as String?,
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? 'Untitled Task',
+      description: json['description']?.toString() ?? '',
+      date: json['date'] != null ? DateTime.parse(json['date'] as String) : DateTime.now(),
+      startTime: json['start_time'] != null ? DateTime.parse(json['start_time'] as String) : DateTime.now(),
+      endTime: json['end_time'] != null ? DateTime.parse(json['end_time'] as String) : DateTime.now(),
+      isCompleted: json['is_completed'] as bool? ?? false,
+      imageUrl: json['image_url']?.toString(),
     );
   }
 

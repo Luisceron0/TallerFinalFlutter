@@ -19,12 +19,12 @@ class MapPointModel {
 
   factory MapPointModel.fromJson(Map<String, dynamic> json) {
     return MapPointModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      createdAt: DateTime.parse(json['created_at'] as String),
-      userId: json['user_id'] as String,
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Unknown Location',
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : 0.0,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : 0.0,
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at'] as String) : DateTime.now(),
+      userId: json['user_id']?.toString() ?? '',
     );
   }
 
