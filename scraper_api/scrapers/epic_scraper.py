@@ -187,7 +187,7 @@ class EpicScraper(PlaywrightBaseScraper):
                 await page.close()
 
     def _parse_price(self, price_text: str) -> Optional[float]:
-        """Parse Epic Games price text to float (no conversion)"""
+        """Parse Epic Games price text to float and convert to COP"""
         if not price_text or price_text.lower() in ['free', 'gratis', '']:
             return 0.0
 
@@ -200,8 +200,10 @@ class EpicScraper(PlaywrightBaseScraper):
             cleaned = cleaned.split(' - ')[0]
 
         try:
-            price = float(cleaned)
-            return price
+            eur_price = float(cleaned)
+            # Convert EUR to COP (Epic shows prices in EUR)
+            cop_price = eur_price / self.EXCHANGE_RATE_EUR_TO_COP
+            return cop_price
         except ValueError:
             logger.warning(f"Could not parse Epic price: {price_text}")
             return None

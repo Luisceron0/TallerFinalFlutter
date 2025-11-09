@@ -164,7 +164,7 @@ class SteamScraper(PlaywrightBaseScraper):
                 await page.close()
 
     def _parse_price(self, price_text: str) -> Optional[float]:
-        """Parse Steam price text to float (no conversion)"""
+        """Parse Steam price text to float and convert to COP"""
         if not price_text or price_text.lower() == 'free':
             return 0.0
 
@@ -181,8 +181,10 @@ class SteamScraper(PlaywrightBaseScraper):
             price_str = cleaned
 
         try:
-            price = float(price_str)
-            return price
+            usd_price = float(price_str)
+            # Convert USD to COP
+            cop_price = usd_price / self.EXCHANGE_RATE_USD_TO_COP
+            return cop_price
         except ValueError:
             logger.warning(f"Could not parse price: {price_text}")
             return None
