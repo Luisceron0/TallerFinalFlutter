@@ -78,7 +78,7 @@ class SteamScraper(PlaywrightBaseScraper):
                 game = {
                     'title': game_data['title'],
                     'steam_app_id': game_data['app_id'],
-                    'url': f"{self.BASE_URL}/app/{game_data['app_id']}/" if game_data['app_id'] else None,
+                    'url': game_data['url'] or None,
                     'image_url': game_data['image_url'],
                     'price': price,
                     'discount_percent': game_data['discount_percent'],
@@ -181,8 +181,8 @@ class SteamScraper(PlaywrightBaseScraper):
             price_str = cleaned
 
         try:
-            usd_price = float(price_str)
-            return usd_price
+            price = float(price_str)
+            return price
         except ValueError:
             logger.warning(f"Could not parse price: {price_text}")
             return None

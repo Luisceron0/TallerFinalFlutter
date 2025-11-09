@@ -95,7 +95,7 @@ class EpicScraper(PlaywrightBaseScraper):
                 game = {
                     'title': game_data['title'],
                     'epic_slug': game_data['epic_slug'],
-                    'url': f"{self.BASE_URL}/es-ES/p/{game_data['epic_slug']}/" if game_data['epic_slug'] else None,
+                    'url': game_data['url'] or None,
                     'image_url': game_data['image_url'],
                     'price': price,
                     'discount_percent': 0,  # Epic doesn't show discount % easily
@@ -200,8 +200,8 @@ class EpicScraper(PlaywrightBaseScraper):
             cleaned = cleaned.split(' - ')[0]
 
         try:
-            eur_price = float(cleaned)
-            return eur_price
+            price = float(cleaned)
+            return price
         except ValueError:
             logger.warning(f"Could not parse Epic price: {price_text}")
             return None

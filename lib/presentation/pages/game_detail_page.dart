@@ -165,16 +165,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
           ),
           const SizedBox(width: 12),
 
-          // Store name
-          Text(
-            store == 'Steam' ? 'Steam' : 'Epic Games',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primaryText,
-            ),
-          ),
-          const SizedBox(width: 12),
+
 
           // Price info
           Expanded(
