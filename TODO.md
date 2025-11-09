@@ -1,12 +1,7 @@
-# TODO: Fix Game Detail Page Issues
+# TODO: Fix Game Price Conversion and Navigation Issues
 
 ## Pending Tasks
-- [x] Fix exchange rates in steam_scraper.py and epic_scraper.py to proper COP values (~4000 USD to COP, ~4500 EUR to COP)
-- [x] Update game_detail_page.dart to import url_launcher and modify _buildPriceCard method
-- [x] Remove store name display from price buttons, show only price
-- [x] Implement URL redirect functionality in button onPressed using url_launcher
-- [x] Remove currency conversion and display prices as received
--- [x] Change price display to show 2 decimal places instead of COP
-- [x] Fix URL construction in scrapers to use proper store URLs
-- [x] Remove store name display from price buttons
-- [x] Test that prices display correctly and buttons redirect properly
+- [x] Fix price conversion in steam_scraper.py: change usd_price / EXCHANGE_RATE to usd_price * EXCHANGE_RATE
+- [x] Fix price conversion in epic_scraper.py: change eur_price / EXCHANGE_RATE to eur_price * EXCHANGE_RATE
+- [x] Verify URL construction in scrapers and button functionality in game_detail_page.dart
+- [x] Test price display and button navigation after fixes

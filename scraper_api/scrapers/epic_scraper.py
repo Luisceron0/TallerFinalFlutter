@@ -202,7 +202,7 @@ class EpicScraper(PlaywrightBaseScraper):
         try:
             eur_price = float(cleaned)
             # Convert EUR to COP (Epic shows prices in EUR)
-            cop_price = eur_price / self.EXCHANGE_RATE_EUR_TO_COP
+            cop_price = eur_price * self.EXCHANGE_RATE_EUR_TO_COP / 100
             return cop_price
         except ValueError:
             logger.warning(f"Could not parse Epic price: {price_text}")
