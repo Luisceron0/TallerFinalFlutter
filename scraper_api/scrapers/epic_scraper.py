@@ -95,7 +95,7 @@ class EpicScraper(PlaywrightBaseScraper):
                 game = {
                     'title': game_data['title'],
                     'epic_slug': game_data['epic_slug'],
-                    'url': game_data['url'],
+                    'url': f"{self.BASE_URL}/es-ES/p/{game_data['epic_slug']}/" if game_data['epic_slug'] else None,
                     'image_url': game_data['image_url'],
                     'price': price,
                     'discount_percent': 0,  # Epic doesn't show discount % easily

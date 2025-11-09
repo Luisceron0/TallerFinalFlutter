@@ -78,7 +78,7 @@ class SteamScraper(PlaywrightBaseScraper):
                 game = {
                     'title': game_data['title'],
                     'steam_app_id': game_data['app_id'],
-                    'url': game_data['url'],
+                    'url': f"{self.BASE_URL}/app/{game_data['app_id']}/" if game_data['app_id'] else None,
                     'image_url': game_data['image_url'],
                     'price': price,
                     'discount_percent': game_data['discount_percent'],
