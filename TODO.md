@@ -5,4 +5,6 @@
 - [x] Update game_detail_page.dart to import url_launcher and modify _buildPriceCard method
 - [x] Remove store name display from price buttons, show only price
 - [x] Implement URL redirect functionality in button onPressed using url_launcher
+- [x] Remove currency conversion and display prices as received
+- [x] Change price display to show 2 decimal places instead of COP
 - [x] Test that prices display correctly and buttons redirect properly

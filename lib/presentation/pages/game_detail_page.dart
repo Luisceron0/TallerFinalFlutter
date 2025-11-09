@@ -171,7 +171,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '\$${price.toStringAsFixed(0)} COP',
+                  '\$${price.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
