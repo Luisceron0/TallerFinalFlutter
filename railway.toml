@@ -1,5 +1,6 @@
 [build]
 builder = "DOCKERFILE"
+buildContext = "./scraper_api"
 
 [deploy]
 healthcheckPath = "/health"
