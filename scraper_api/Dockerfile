@@ -21,9 +21,6 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers
-RUN playwright install chromium
-
 # Copy application code
 COPY . .
 
@@ -31,6 +28,9 @@ COPY . .
 RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app
 USER app
+
+# Install Playwright browsers as app user
+RUN playwright install chromium
 
 # Expose port
 EXPOSE 8000

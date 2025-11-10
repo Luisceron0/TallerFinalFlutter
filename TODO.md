@@ -11,8 +11,9 @@
 4. Test locally if possible
 
 ## Steps
-- [ ] Update scraper_api/render.yaml: Remove PLAYWRIGHT_BROWSERS_PATH env var
-- [ ] Update scraper_api/services/gemini_service.py: Change model to 'gemini-1.5-pro'
-- [ ] Update scraper_api/requirements.txt: Update google-generativeai to latest version
-- [ ] Run playwright install locally to ensure browsers are available
-- [ ] Test API endpoints to verify fixes
+- [x] Update scraper_api/render.yaml: Remove PLAYWRIGHT_BROWSERS_PATH env var
+- [x] Update scraper_api/services/gemini_service.py: Change model to 'gemini-1.5-flash'
+- [x] Update scraper_api/requirements.txt: Update google-generativeai to latest version
+- [x] Update scraper_api/Dockerfile: Move playwright install after user creation
+- [x] Run playwright install locally to ensure browsers are available
+- [x] Test API endpoints to verify fixes
