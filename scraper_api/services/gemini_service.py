@@ -16,7 +16,7 @@ class GeminiService:
     def __init__(self):
         if settings.gemini_api_key:
             genai.configure(api_key=settings.gemini_api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            self.model = genai.GenerativeModel('gemini-1.5-pro')
             logger.info("✅ Gemini AI service initialized")
         else:
             self.model = None
