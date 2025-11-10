@@ -12,7 +12,8 @@
 4. Test deployment
 
 ## Steps Completed
-- [x] Create railway.toml configuration in scraper_api/ directory
+- [x] Create railway.toml in root directory pointing to scraper_api/
+- [x] Create railway.toml in scraper_api/ with Nixpacks configuration
 - [x] Create start.sh script for Railway deployment
 - [x] Remove old railway.json and nixpacks.toml from scraper_api/
 - [x] Create .env.example template
@@ -38,7 +39,8 @@
 - DEBUG_MODE
 
 ## Railway Configuration
-- railway.toml in scraper_api/ directory with Nixpacks builder
+- railway.toml (root) specifies source = "scraper_api"
+- railway.toml (scraper_api/) configures Nixpacks build
 - start.sh script handles Playwright installation and app startup
 - Playwright chromium installation with dependencies
 - Health check at /health endpoint
