@@ -2,8 +2,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ScraperConfig {
   static String get scraperApiUrl {
-    // Always use Render production URL
-    return 'https://tallerfinalflutter.onrender.com';
+    // Use Railway production URL
+    return 'https://tallerfinalflutter-production.up.railway.app';
   }
 
   static String get geminiApiKey {

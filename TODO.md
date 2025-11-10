@@ -1,19 +1,37 @@
-# Fix Scraper API Issues
+# Migration to Railway - COMPLETED
 
-## Issues Identified
+## Issues with Render
 - Playwright browser executable not found due to incorrect path in render.yaml
 - Gemini model 'gemini-1.5-flash' not found (404 error)
+- Docker-based deployment issues with Playwright
 
-## Plan
-1. Update render.yaml to remove or correct PLAYWRIGHT_BROWSERS_PATH
-2. Update gemini_service.py to use 'gemini-1.5-pro' model
-3. Update requirements.txt to use latest google-generativeai version
-4. Test locally if possible
+## Railway Migration Plan
+1. Create Railway configuration files
+2. Set up Nixpacks for native Python deployment
+3. Configure environment variables
+4. Test deployment
 
-## Steps
-- [x] Update scraper_api/render.yaml: Remove PLAYWRIGHT_BROWSERS_PATH env var
-- [x] Update scraper_api/services/gemini_service.py: Change model to 'gemini-1.5-pro'
-- [x] Update scraper_api/requirements.txt: Update google-generativeai to latest version
-- [x] Update scraper_api/scrapers/epic_scraper.py: Add requests import for fallback
-- [x] Run playwright install locally to ensure browsers are available
-- [ ] Test API endpoints to verify fixes
+## Steps Completed
+- [x] Create railway.json configuration
+- [x] Create nixpacks.toml for Playwright setup
+- [x] Create .env.example template
+- [x] Create README.md with deployment instructions
+- [x] Remove Docker dependency (using native Python deployment)
+- [x] Remove all Render-specific files (render.yaml, Dockerfile)
+- [x] Update main.py to clarify local development usage
+- [x] Update Flutter scraper_config.dart to use Railway URL
+- [x] Create .env files for both Python API and Flutter app
+- [x] Ready for Railway deployment - no local Python execution needed
+
+## Environment Variables Configured
+### Python API (.env)
+- SUPABASE_URL
+- SUPABASE_SERVICE_KEY
+- GEMINI_API_KEY
+- DEBUG_MODE
+
+### Flutter App (.env)
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- GEMINI_API_KEY
+- DEBUG_MODE

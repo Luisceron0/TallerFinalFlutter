@@ -386,7 +386,7 @@ async def shutdown_event():
     logger.info("🛑 Shutting down GamePrice Scraper API")
 
 if __name__ == "__main__":
-    # Get port from environment variable for Render deployment
+    # For local development only
     import os
     port = int(os.environ.get("PORT", 8000))
 

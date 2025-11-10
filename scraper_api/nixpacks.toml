@@ -1,0 +1,16 @@
+[phases.setup]
+nixPkgs = ["...", "playwright-driver", "chromium"]
+
+[phases.install]
+cmds = [
+  "pip install --no-cache-dir -r requirements.txt",
+  "playwright install chromium --with-deps"
+]
+
+[phases.build]
+cmds = [
+  "echo 'Build completed'"
+]
+
+[start]
+cmd = "python main.py"
