@@ -213,7 +213,7 @@ def search_epic_games(query: str) -> List[Dict[str, Any]]:
 
             # Use discount price if available, otherwise original price
             current_price_usd = discount_price if discount_price > 0 else original_price
-            current_price_usd = current_price_usd / 100 if current_price_usd > 0 else 0
+            current_price_usd = current_price_usd / 10000 if current_price_usd > 0 else 0
 
             # Convert EUR to COP (exchange rate: 1 EUR ≈ 4500 COP)
             cop_price = current_price_usd * 4500 if current_price_usd > 0 else 0
@@ -358,7 +358,7 @@ async def refresh_wishlist(request: RefreshWishlistRequest, background_tasks: Ba
                             data = response.json()
                             if data.get(str(game['steam_app_id']), {}).get('success'):
                                 price_info = data[str(game['steam_app_id'])].get('data', {}).get('price_overview', {})
-                                steam_price = price_info.get('final', 0) / 100 if price_info else None
+                                steam_price = price_info.get('final', 0) / 10000 if price_info else None
                     except Exception as e:
                         logger.warning(f"Failed to get Steam price for {game['steam_app_id']}: {e}")
 
