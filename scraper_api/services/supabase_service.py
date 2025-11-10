@@ -233,6 +233,15 @@ class SupabaseService:
             'expires_at': expires_at.isoformat()
         }).execute()
 
+    async def get_price_history(self, game_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get price history for a game"""
+        try:
+            result = self.client.table('price_history').select('*').eq('game_id', game_id).order('scraped_at', desc=True).limit(limit).execute()
+            return result.data if result.data else []
+        except Exception as e:
+            logger.error(f"Failed to get price history for game {game_id}: {e}")
+            return []
+
     def _normalize_title(self, title: str) -> str:
         """Normalize game title for matching"""
         if not title:
