@@ -23,6 +23,7 @@ class ScraperConfig {
   // API Endpoints
   static String get searchEndpoint => '$scraperApiUrl/api/search';
   static String get refreshWishlistEndpoint => '$scraperApiUrl/api/refresh-wishlist';
+  static String get analyzePurchaseEndpoint => '$scraperApiUrl/api/analyze-purchase';
 
   // Request timeouts (in seconds)
   static const int searchTimeout = 30; // Steam/Epic scraping can be slow
