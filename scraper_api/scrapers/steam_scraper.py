@@ -183,7 +183,7 @@ class SteamScraper(PlaywrightBaseScraper):
         try:
             usd_price = float(price_str)
             # Convert USD to COP
-            cop_price = usd_price * self.EXCHANGE_RATE_USD_TO_COP / 100
+            cop_price = usd_price * self.EXCHANGE_RATE_USD_TO_COP
             return cop_price
         except ValueError:
             logger.warning(f"Could not parse price: {price_text}")
