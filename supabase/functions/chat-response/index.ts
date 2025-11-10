@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, prompt } = await req.json()
+    const { message } = await req.json()
 
     // Call Gemini AI for chat response
     const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${Deno.env.get('GEMINI_API_KEY')}`, {
@@ -23,7 +23,7 @@ serve(async (req) => {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: prompt
+            text: message
           }]
         }]
       })

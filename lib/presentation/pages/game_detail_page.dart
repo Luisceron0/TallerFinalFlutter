@@ -5,7 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../controllers/game_controller.dart';
 import '../controllers/auth_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../data/services/scraper_api_service.dart';
+import '../../services/gemini_ai_service.dart';
 
 class GameDetailPage extends StatefulWidget {
   final dynamic game;
@@ -20,7 +20,6 @@ class _GameDetailPageState extends State<GameDetailPage> {
   final GameController _gameController = Get.find<GameController>();
   final AuthController _authController = Get.find<AuthController>();
   final SupabaseClient _client = Supabase.instance.client;
-  final ScraperApiService _scraperApiService = ScraperApiService();
 
   bool _isInWishlist = false;
   bool _isLoadingWishlist = false;
@@ -348,10 +347,13 @@ class _GameDetailPageState extends State<GameDetailPage> {
         return;
       }
 
-      final analysis = await _scraperApiService.analyzePurchaseDecision(
-        gameId: widget.game.id,
-        userId: user.id,
-      );
+      final analysis = await Get.find<GeminiAIService>()
+          .analyzePurchaseDecision(
+            gameTitle: widget.game.title,
+            steamPrice: widget.game.prices?['steam']?['price'],
+            epicPrice: widget.game.prices?['epic']?['price'],
+            userId: user.id,
+          );
 
       setState(() => _purchaseAnalysis = analysis);
       Get.snackbar('Éxito', 'Análisis de compra completado');

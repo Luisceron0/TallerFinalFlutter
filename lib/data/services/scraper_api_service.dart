@@ -130,30 +130,4 @@ class ScraperApiService {
       return false;
     }
   }
-
-  /// Analizar decisión de compra con IA (usando Supabase Edge Functions)
-  Future<Map<String, dynamic>> analyzePurchaseDecision({
-    required String gameId,
-    required String userId,
-  }) async {
-    try {
-      // Usar Supabase Edge Function para análisis de IA
-      final supabase = Supabase.instance.client;
-
-      final response = await supabase.functions.invoke(
-        'analyze-purchase',
-        body: {'game_id': gameId, 'user_id': userId},
-      );
-
-      if (response.status != 200) {
-        throw Exception(
-          'Error calling analyze-purchase function: ${response.status}',
-        );
-      }
-
-      return response.data as Map<String, dynamic>;
-    } catch (e) {
-      throw Exception('Error analyzing purchase decision: $e');
-    }
-  }
 }

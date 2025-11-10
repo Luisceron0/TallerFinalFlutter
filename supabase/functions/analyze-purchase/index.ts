@@ -23,16 +23,7 @@ serve(async (req) => {
       }
     )
 
-    const { game_id, user_id } = await req.json()
-
-    // Get game data from Supabase
-    const { data: game, error: gameError } = await supabaseClient
-      .from('games')
-      .select('*, price_history(*)')
-      .eq('id', game_id)
-      .single()
-
-    if (gameError) throw gameError
+    const { game_title, steam_price, epic_price, user_id } = await req.json()
 
     // Get user search history
     const { data: searches } = await supabaseClient
@@ -41,10 +32,6 @@ serve(async (req) => {
       .eq('user_id', user_id)
       .order('searched_at', { ascending: false })
       .limit(10)
-
-    // Extract current prices
-    const steamPrice = game.price_history?.find((p: any) => p.store === 'steam')?.price
-    const epicPrice = game.price_history?.find((p: any) => p.store === 'epic')?.price
 
     // Call Gemini AI for analysis
     const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${Deno.env.get('GEMINI_API_KEY')}`, {
@@ -64,9 +51,9 @@ serve(async (req) => {
   "factores_clave": ["factor 1", "factor 2", "factor 3"]
 }
 
-Juego: ${game.title}
-Steam: ${steamPrice ?? 'N/A'}€
-Epic: ${epicPrice ?? 'N/A'}€
+Juego: ${game_title}
+Steam: ${steam_price ?? 'N/A'}€
+Epic: ${epic_price ?? 'N/A'}€
 
 Búsquedas recientes del usuario: ${searches?.map((s: any) => s.query).join(', ') || 'Ninguna'}`
           }]
