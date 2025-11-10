@@ -2,11 +2,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ScraperConfig {
   static String get scraperApiUrl {
-    final url = dotenv.env['SCRAPER_API_URL'];
-    if (url == null || url.isEmpty) {
-      throw Exception('SCRAPER_API_URL must be provided in .env file');
-    }
-    return url;
+    // Always use Render production URL
+    return 'https://gameprice-scraper.onrender.com';
   }
 
   static String get geminiApiKey {
