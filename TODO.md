@@ -4,6 +4,7 @@
 - Playwright browser executable not found due to incorrect path in render.yaml
 - Gemini model 'gemini-1.5-flash' not found (404 error)
 - Docker-based deployment issues with Playwright
+- Railway was detecting Flutter instead of Python API
 
 ## Railway Migration Plan
 1. Create Railway configuration files
@@ -12,8 +13,7 @@
 4. Test deployment
 
 ## Steps Completed
-- [x] Create railway.toml in root directory pointing to scraper_api/
-- [x] Create railway.toml in scraper_api/ with Nixpacks configuration
+- [x] Create railway.toml in root directory with full Nixpacks config
 - [x] Create start.sh script for Railway deployment
 - [x] Remove old railway.json and nixpacks.toml from scraper_api/
 - [x] Create .env.example template
@@ -39,9 +39,8 @@
 - DEBUG_MODE
 
 ## Railway Configuration
-- railway.toml (root) specifies source = "scraper_api"
-- railway.toml (scraper_api/) configures Nixpacks build
+- railway.toml (root) with source="scraper_api" and full Nixpacks config
 - start.sh script handles Playwright installation and app startup
 - Playwright chromium installation with dependencies
 - Health check at /health endpoint
-- Proper start command: ./start.sh
+- Proper start command: cd scraper_api && ./start.sh

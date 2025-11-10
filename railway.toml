@@ -7,3 +7,21 @@ healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+
+[build.nixpacks]
+[build.nixpacks.phases.setup]
+nixPkgs = ["...", "python311", "playwright-driver", "chromium"]
+
+[build.nixpacks.phases.install]
+cmds = [
+  "cd scraper_api && pip install --no-cache-dir -r requirements.txt"
+]
+
+[build.nixpacks.phases.build]
+cmds = [
+  "cd scraper_api && playwright install chromium --with-deps",
+  "cd scraper_api && chmod +x start.sh"
+]
+
+[build.nixpacks.start]
+cmd = "cd scraper_api && ./start.sh"
