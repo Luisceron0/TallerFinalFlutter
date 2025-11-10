@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Any
 from .base_scraper import PlaywrightBaseScraper
 import logging
 import re
+import requests
 
 logger = logging.getLogger(__name__)
 
