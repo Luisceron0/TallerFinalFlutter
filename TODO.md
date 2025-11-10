@@ -1,28 +1,27 @@
+# Purchase Decision Assistant Implementation
 
-# Render Deployment - FINAL CONFIGURATION
+## Backend Changes
+- [ ] Add `analyze_purchase_decision` method to GeminiService with structured JSON response
+- [ ] Create new `/api/analyze-purchase` endpoint in FastAPI
+- [ ] Implement price history retrieval and user profile analysis
+- [ ] Add caching mechanism for AI responses
 
-## Issues Identified
-- Playwright browser executable not found in Render
-- Gemini model 'gemini-1.5-flash' not found (404 error)
-- Railway deployment failed with Flutter detection instead of Python
-- Fly.io deployment had issues with Docker configuration
+## Frontend Changes
+- [ ] Add "🤖 ¿Debería comprarlo?" button to GameDetailPage
+- [ ] Create modal/dialog for displaying detailed purchase analysis
+- [ ] Update ScraperApiService with new purchase analysis method
+- [ ] Handle loading states and error cases
 
-## Render Fix Plan
-1. Use render.yaml configuration (already working)
-2. Keep Docker-based build with Playwright installation
-3. Update Flutter app to Render URL
-4. Fix Gemini model name
-5. Update google-generativeai version
+## Data Model Updates
+- [ ] Potentially extend GameEntity or create new model for detailed analysis
+- [ ] Ensure proper JSON structure for AI responses
 
-## Steps Completed
-- [x] Create render.yaml in root directory
-- [x] Keep existing Docker build configuration with Playwright
-- [x] Update Flutter scraper_config.dart to Render URL (gameprice-scraper.onrender.com)
-- [x] Update gemini_service.py to use 'gemini-1.5-pro'
-- [x] Update requirements.txt to compatible google-generativeai (0.8.3)
-- [x] Remove Railway and Fly configuration files
+## Additional Tasks
+- [ ] Remove notifications tab from the app
+- [ ] Verify games are properly added to wishlist
 
-## Next Steps
-- [x] Deploy to Render (will use render.yaml configuration)
-- [ ] Test API endpoints after deployment
-- [ ] Verify Playwright and Gemini work correctly
+## Followup Steps
+- [ ] Test the new endpoint with sample data
+- [ ] Implement caching to avoid repeated API calls
+- [ ] Add error handling for AI service failures
+- [ ] Update UI to handle different analysis scenarios

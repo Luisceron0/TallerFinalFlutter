@@ -134,4 +134,24 @@ class ScraperApiService {
       return false;
     }
   }
+
+  /// Analizar decisión de compra con IA
+  Future<Map<String, dynamic>> analyzePurchaseDecision({
+    required String gameId,
+    required String userId,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/api/analyze-purchase',
+        data: {
+          'game_id': gameId,
+          'user_id': userId,
+        },
+      );
+
+      return response.data;
+    } catch (e) {
+      throw Exception('Error analyzing purchase decision: $e');
+    }
+  }
 }

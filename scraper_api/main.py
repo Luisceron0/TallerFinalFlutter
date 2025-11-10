@@ -77,6 +77,10 @@ class AddToWishlistRequest(BaseModel):
     game_id: str
     target_price: Optional[float] = None
 
+class AnalyzePurchaseRequest(BaseModel):
+    game_id: str
+    user_id: str
+
 async def search_steam_games(query: str) -> List[Dict[str, Any]]:
     """Search Steam games using Playwright scraper"""
     try:
@@ -366,6 +370,103 @@ async def add_to_wishlist(request: AddToWishlistRequest):
     except Exception as e:
         logger.error(f"Failed to add game to wishlist: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to add to wishlist: {str(e)}")
+
+@app.post("/api/analyze-purchase")
+async def analyze_purchase_decision(request: AnalyzePurchaseRequest):
+    """
+    Comprehensive AI-powered purchase decision analysis
+    Returns detailed analysis with recommendation, confidence, and key factors
+    """
+    try:
+        logger.info(f"Analyzing purchase decision for game {request.game_id} by user {request.user_id}")
+
+        # Get game details from database
+        game = await supabase_service.get_game_by_id(request.game_id)
+        if not game:
+            raise HTTPException(status_code=404, detail="Game not found")
+
+        # Get current prices
+        steam_price = None
+        epic_price = None
+
+        # Get Steam price
+        if game.get('steam_app_id'):
+            try:
+                steam_url = f"https://store.steampowered.com/api/appdetails?appids={game['steam_app_id']}"
+                response = requests.get(steam_url, timeout=10)
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get(str(game['steam_app_id']), {}).get('success'):
+                        price_info = data[str(game['steam_app_id'])].get('data', {}).get('price_overview', {})
+                        steam_price = price_info.get('final', 0) / 100 if price_info else None
+            except Exception as e:
+                logger.warning(f"Failed to get Steam price for {game['steam_app_id']}: {e}")
+
+        # Get Epic price
+        if game.get('epic_slug'):
+            try:
+                from scrapers.epic_scraper import EpicScraper
+                async with EpicScraper() as scraper:
+                    epic_games = await scraper.search_games(game['title'])
+                    if epic_games:
+                        epic_price = epic_games[0].get('price')
+            except Exception as e:
+                logger.warning(f"Failed to get Epic price for {game['epic_slug']}: {e}")
+
+        # Get price history for analysis
+        price_history = await supabase_service.get_price_history(request.game_id, limit=10)
+
+        # Generate comprehensive AI analysis
+        if settings.gemini_api_key:
+            analysis = await gemini_service.analyze_purchase_decision(
+                game_title=game['title'],
+                steam_price=steam_price,
+                epic_price=epic_price,
+                user_id=request.user_id,
+                price_history=price_history
+            )
+
+            if analysis:
+                return {
+                    "game_id": request.game_id,
+                    "game_title": game['title'],
+                    "analysis": analysis,
+                    "generated_at": datetime.utcnow().isoformat()
+                }
+
+        # Fallback response if AI is not available
+        return {
+            "game_id": request.game_id,
+            "game_title": game['title'],
+            "analysis": {
+                "recommendation": "BUY_NOW",
+                "confidence_score": 50,
+                "summary": "AI analysis not available. Based on current prices, this appears to be a reasonable purchase.",
+                "price_analysis": {
+                    "best_store": "Steam" if steam_price and (not epic_price or steam_price <= epic_price) else "Epic",
+                    "current_deal_quality": "Fair",
+                    "price_trend": "Price trend analysis not available",
+                    "savings_potential": "Unable to determine savings potential"
+                },
+                "user_fit_analysis": {
+                    "genre_match": "Unknown",
+                    "budget_alignment": "Unknown",
+                    "timing_recommendation": "Buy now if interested"
+                },
+                "key_factors": [
+                    "Current prices appear reasonable",
+                    "AI analysis temporarily unavailable"
+                ],
+                "alternative_suggestions": []
+            },
+            "generated_at": datetime.utcnow().isoformat()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to analyze purchase decision: {e}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
 @app.on_event("startup")
 async def startup_event():

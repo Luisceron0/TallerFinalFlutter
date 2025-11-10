@@ -156,6 +156,104 @@ class GeminiService:
             logger.error(f"Failed to evaluate deal quality: {e}")
             return None
 
+    async def analyze_purchase_decision(self, game_title: str, steam_price: Optional[float],
+                                      epic_price: Optional[float], user_id: str,
+                                      price_history: List[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+        """Comprehensive purchase decision analysis using Gemini AI"""
+        if not self.model:
+            return None
+
+        try:
+            # Get user profile insights
+            user_profile = await self.analyze_user_profile(user_id)
+
+            # Get user's search history for context
+            user_history = await self._get_user_search_history(user_id, limit=15)
+
+            # Analyze price history if available
+            price_trend = "No price history available"
+            if price_history and len(price_history) > 1:
+                recent_prices = [p.get('price', 0) for p in price_history[-5:] if p.get('price')]
+                if recent_prices:
+                    avg_price = sum(recent_prices) / len(recent_prices)
+                    current_price = steam_price or epic_price
+                    if current_price:
+                        if current_price < avg_price:
+                            price_trend = f"Current price (€{current_price:.2f}) is below average (€{avg_price:.2f}) - Good deal!"
+                        elif current_price > avg_price:
+                            price_trend = f"Current price (€{current_price:.2f}) is above average (€{avg_price:.2f}) - Consider waiting"
+                        else:
+                            price_trend = f"Current price (€{current_price:.2f}) matches average - Fair value"
+
+            prompt = f"""
+            Provide a comprehensive purchase decision analysis for this game. Return a JSON response with the following structure:
+
+            {{
+                "recommendation": "BUY_NOW" | "WAIT" | "SKIP",
+                "confidence_score": 0-100,
+                "summary": "Brief 2-3 sentence summary",
+                "price_analysis": {{
+                    "best_store": "Steam" | "Epic" | "Both",
+                    "current_deal_quality": "Excellent" | "Good" | "Fair" | "Poor",
+                    "price_trend": "{price_trend}",
+                    "savings_potential": "Estimated savings if waiting"
+                }},
+                "user_fit_analysis": {{
+                    "genre_match": "High" | "Medium" | "Low" | "Unknown",
+                    "budget_alignment": "Within budget" | "Above budget" | "Below budget",
+                    "timing_recommendation": "Buy now" | "Wait for sale" | "Skip"
+                }},
+                "key_factors": [
+                    "Factor 1 with brief explanation",
+                    "Factor 2 with brief explanation",
+                    "Factor 3 with brief explanation"
+                ],
+                "alternative_suggestions": [
+                    "Alternative game 1 if applicable",
+                    "Alternative game 2 if applicable"
+                ]
+            }}
+
+            Game: {game_title}
+            Steam Price: {steam_price}€ (or Free)
+            Epic Price: {epic_price}€ (or Free)
+            Price History: {price_trend}
+
+            User Profile: {user_profile or 'No profile data available'}
+            User's Recent Searches: {', '.join(user_history[:10])}
+
+            Consider:
+            - Price comparison between stores
+            - Historical price trends
+            - User's gaming preferences and budget
+            - Value for money
+            - Timing for best deals
+            - Alternative recommendations if not a good fit
+
+            Be realistic and data-driven in your analysis.
+            """
+
+            response = await self.model.generate_content_async(prompt)
+
+            # Try to parse JSON response
+            try:
+                import json
+                result = json.loads(response.text.strip())
+                # Validate required fields
+                required_fields = ['recommendation', 'confidence_score', 'summary', 'price_analysis', 'user_fit_analysis', 'key_factors']
+                if all(field in result for field in required_fields):
+                    return result
+                else:
+                    logger.warning("AI response missing required fields")
+                    return None
+            except json.JSONDecodeError:
+                logger.warning("Could not parse Gemini JSON response for purchase analysis")
+                return None
+
+        except Exception as e:
+            logger.error(f"Failed to analyze purchase decision: {e}")
+            return None
+
     async def _get_user_search_history(self, user_id: str, limit: int = 10) -> List[str]:
         """Get user's recent search history"""
         try:

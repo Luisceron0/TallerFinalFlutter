@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../controllers/game_controller.dart';
 import '../controllers/auth_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/services/scraper_api_service.dart';
 
 class GameDetailPage extends StatefulWidget {
   final dynamic game;
@@ -19,9 +20,12 @@ class _GameDetailPageState extends State<GameDetailPage> {
   final GameController _gameController = Get.find<GameController>();
   final AuthController _authController = Get.find<AuthController>();
   final SupabaseClient _client = Supabase.instance.client;
+  final ScraperApiService _scraperApiService = ScraperApiService();
 
   bool _isInWishlist = false;
   bool _isLoadingWishlist = false;
+  bool _isAnalyzingPurchase = false;
+  Map<String, dynamic>? _purchaseAnalysis;
 
   @override
   void initState() {
@@ -250,6 +254,58 @@ class _GameDetailPageState extends State<GameDetailPage> {
     }
   }
 
+  Future<void> _analyzePurchaseDecision() async {
+    if (_isAnalyzingPurchase) return;
+
+    setState(() => _isAnalyzingPurchase = true);
+
+    try {
+      final user = _client.auth.currentUser;
+      if (user == null) {
+        Get.snackbar('Error', 'Debes iniciar sesión para analizar compras');
+        return;
+      }
+
+      final analysis = await _scraperApiService.analyzePurchaseDecision(
+        gameId: widget.game.id,
+        userId: user.id,
+      );
+
+      setState(() => _purchaseAnalysis = analysis);
+      Get.snackbar('Éxito', 'Análisis de compra completado');
+    } catch (e) {
+      Get.snackbar('Error', 'No se pudo analizar la compra: $e');
+    } finally {
+      setState(() => _isAnalyzingPurchase = false);
+    }
+  }
+
+  Color _getRecommendationColor(String recommendation) {
+    switch (recommendation.toUpperCase()) {
+      case 'BUY_NOW':
+        return Colors.green;
+      case 'WAIT_FOR_SALE':
+        return Colors.orange;
+      case 'AVOID':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getRecommendationText(String recommendation) {
+    switch (recommendation.toUpperCase()) {
+      case 'BUY_NOW':
+        return 'Comprar Ahora';
+      case 'WAIT_FOR_SALE':
+        return 'Esperar Oferta';
+      case 'AVOID':
+        return 'Evitar';
+      default:
+        return 'Sin Recomendación';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -440,9 +496,127 @@ class _GameDetailPageState extends State<GameDetailPage> {
 
                       const SizedBox(height: 24),
 
+                      // AI Purchase Analysis section
+                      if (_purchaseAnalysis != null) ...[
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryPurple.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.primaryPurple.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.analytics,
+                                    color: AppColors.primaryPurple,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Análisis de Compra IA',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primaryText,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              // Recommendation
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: _getRecommendationColor(_purchaseAnalysis!['analysis']['recommendation']).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  _getRecommendationText(_purchaseAnalysis!['analysis']['recommendation']),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: _getRecommendationColor(_purchaseAnalysis!['analysis']['recommendation']),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              // Summary
+                              Text(
+                                _purchaseAnalysis!['analysis']['summary'],
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.secondaryText,
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // Key factors
+                              if (_purchaseAnalysis!['analysis']['key_factors'] != null) ...[
+                                const Text(
+                                  'Factores clave:',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryText,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                ...(_purchaseAnalysis!['analysis']['key_factors'] as List<dynamic>).map((factor) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('• ', style: TextStyle(color: AppColors.secondaryText)),
+                                      Expanded(
+                                        child: Text(
+                                          factor.toString(),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.secondaryText,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
                       // Action buttons
                       Row(
                         children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _isAnalyzingPurchase ? null : _analyzePurchaseDecision,
+                              icon: _isAnalyzingPurchase
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    )
+                                  : const Icon(Icons.analytics),
+                              label: Text(_isAnalyzingPurchase ? 'Analizando...' : 'Analizar Compra'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryPurple,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: OutlinedButton.icon(
