@@ -11,8 +11,8 @@ services:
       apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 &&
       rm -rf /var/lib/apt/lists/* &&
       pip install --no-cache-dir -r requirements.txt &&
-      playwright install chromium &&
-      playwright install-deps
+      PLAYWRIGHT_BROWSERS_PATH=/opt/render/.cache/ms-playwright playwright install chromium &&
+      PLAYWRIGHT_BROWSERS_PATH=/opt/render/.cache/ms-playwright playwright install-deps
     startCommand: python main.py
     healthCheckPath: /health
     envVars:

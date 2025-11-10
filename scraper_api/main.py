@@ -132,6 +132,49 @@ async def search_games(request: SearchRequest, background_tasks: BackgroundTasks
             steam_results, epic_results
         )
 
+        # Ensure both prices are fetched for each game
+        for game_data in merged_results:
+            game = game_data['game']
+            prices = game_data['prices']
+
+            # If game has steam_app_id but no steam price, try to get it
+            if game.get('steam_app_id') and not prices.get('steam'):
+                try:
+                    steam_url = f"https://store.steampowered.com/api/appdetails?appids={game['steam_app_id']}"
+                    response = requests.get(steam_url, timeout=10)
+                    if response.status_code == 200:
+                        data = response.json()
+                        if data.get(str(game['steam_app_id']), {}).get('success'):
+                            price_info = data[str(game['steam_app_id'])].get('data', {}).get('price_overview', {})
+                            steam_price = price_info.get('final', 0) / 100 if price_info else None
+                            if steam_price is not None:
+                                prices['steam'] = {
+                                    'price': steam_price,
+                                    'url': f"https://store.steampowered.com/app/{game['steam_app_id']}",
+                                    'is_free': steam_price == 0,
+                                    'discount_percent': price_info.get('discount_percent', 0)
+                                }
+                except Exception as e:
+                    logger.warning(f"Failed to get Steam price for {game['steam_app_id']}: {e}")
+
+            # If game has epic_slug but no epic price, try to get it
+            if game.get('epic_slug') and not prices.get('epic'):
+                try:
+                    from scrapers.epic_scraper import EpicScraper
+                    async with EpicScraper() as scraper:
+                        epic_games = await scraper.search_games(game['title'])
+                        if epic_games:
+                            epic_price = epic_games[0].get('price')
+                            if epic_price is not None:
+                                prices['epic'] = {
+                                    'price': epic_price,
+                                    'url': epic_games[0].get('url'),
+                                    'is_free': epic_price == 0,
+                                    'discount_percent': 0
+                                }
+                except Exception as e:
+                    logger.warning(f"Failed to get Epic price for {game['epic_slug']}: {e}")
+
         # Convert to response format
         results = []
         for game_data in merged_results:
@@ -230,6 +273,19 @@ async def refresh_wishlist(request: RefreshWishlistRequest, background_tasks: Ba
                                 epic_price = epic_games[0].get('price')
                     except Exception as e:
                         logger.warning(f"Failed to get Epic price for {game['epic_slug']}: {e}")
+
+                # Also try to get Steam price if Epic failed
+                if steam_price is None and game.get('steam_app_id'):
+                    try:
+                        steam_url = f"https://store.steampowered.com/api/appdetails?appids={game['steam_app_id']}"
+                        response = requests.get(steam_url, timeout=10)
+                        if response.status_code == 200:
+                            data = response.json()
+                            if data.get(str(game['steam_app_id']), {}).get('success'):
+                                price_info = data[str(game['steam_app_id'])].get('data', {}).get('price_overview', {})
+                                steam_price = price_info.get('final', 0) / 100 if price_info else None
+                    except Exception as e:
+                        logger.warning(f"Failed to get Steam price for {game['steam_app_id']}: {e}")
 
                 # Save new price history
                 await supabase_service.save_price_history(game_id, steam_price, epic_price)
