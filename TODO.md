@@ -12,8 +12,8 @@
 4. Test deployment
 
 ## Steps Completed
-- [x] Create railway.json configuration
-- [x] Create nixpacks.toml for Playwright setup
+- [x] Create railway.toml configuration (root level)
+- [x] Remove old railway.json and nixpacks.toml from scraper_api/
 - [x] Create .env.example template
 - [x] Create README.md with deployment instructions
 - [x] Remove Docker dependency (using native Python deployment)
@@ -24,7 +24,7 @@
 - [x] Ready for Railway deployment - no local Python execution needed
 
 ## Environment Variables Configured
-### Python API (.env)
+### Python API (scraper_api/.env)
 - SUPABASE_URL
 - SUPABASE_SERVICE_KEY
 - GEMINI_API_KEY
@@ -35,3 +35,9 @@
 - SUPABASE_ANON_KEY
 - GEMINI_API_KEY
 - DEBUG_MODE
+
+## Railway Configuration
+- railway.toml at root level with Nixpacks builder
+- Playwright chromium installation with dependencies
+- Health check at /health endpoint
+- Proper start command: python scraper_api/main.py
