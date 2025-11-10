@@ -1,27 +1,9 @@
 [build]
-builder = "NIXPACKS"
-source = "scraper_api"
+builder = "DOCKERFILE"
+dockerfilePath = "scraper_api/Dockerfile"
 
 [deploy]
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
-
-[build.nixpacks]
-[build.nixpacks.phases.setup]
-nixPkgs = ["...", "python311", "playwright-driver", "chromium"]
-
-[build.nixpacks.phases.install]
-cmds = [
-  "pip install --no-cache-dir -r requirements.txt"
-]
-
-[build.nixpacks.phases.build]
-cmds = [
-  "playwright install chromium --with-deps",
-  "chmod +x start.sh"
-]
-
-[build.nixpacks.start]
-cmd = "python main.py"
