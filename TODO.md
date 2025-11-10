@@ -12,7 +12,7 @@
 4. Test deployment
 
 ## Steps Completed
-- [x] Create railway.toml configuration (root level)
+- [x] Create railway.toml configuration in scraper_api/ directory
 - [x] Remove old railway.json and nixpacks.toml from scraper_api/
 - [x] Create .env.example template
 - [x] Create README.md with deployment instructions
@@ -37,7 +37,7 @@
 - DEBUG_MODE
 
 ## Railway Configuration
-- railway.toml at root level with Nixpacks builder
+- railway.toml in scraper_api/ directory with Nixpacks builder
 - Playwright chromium installation with dependencies
 - Health check at /health endpoint
-- Proper start command: python scraper_api/main.py
+- Proper start command: python main.py (relative to scraper_api/)

@@ -2,7 +2,7 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "python scraper_api/main.py"
+startCommand = "python main.py"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
@@ -14,7 +14,7 @@ nixPkgs = ["...", "playwright-driver", "chromium"]
 
 [build.nixpacks.phases.install]
 cmds = [
-  "pip install --no-cache-dir -r scraper_api/requirements.txt",
+  "pip install --no-cache-dir -r requirements.txt",
   "playwright install chromium --with-deps"
 ]
 
@@ -24,4 +24,4 @@ cmds = [
 ]
 
 [build.nixpacks.start]
-cmd = "python scraper_api/main.py"
+cmd = "python main.py"
