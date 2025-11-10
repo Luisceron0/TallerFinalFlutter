@@ -101,6 +101,25 @@ class GeminiAIService {
     }
   }
 
+  Future<String?> generateChatResponse(String userMessage) async {
+    try {
+      final prompt =
+          """
+      Eres un asistente especializado en juegos de PC. Responde de manera útil y concisa a: "$userMessage"
+
+      Mantén un tono amigable y experto en gaming. Si mencionan precios, enfócate en rangos realistas (€10-60 para juegos AAA, €5-30 para indie).
+      Si preguntan por recomendaciones, sugiere juegos específicos con precios aproximados.
+      Responde en español.
+      """;
+
+      final response = await _model.generateContent([Content.text(prompt)]);
+      return response.text;
+    } catch (e) {
+      print('Error generando respuesta de chat: $e');
+      return 'Lo siento, tuve un problema procesando tu mensaje. ¿Puedes intentarlo de nuevo?';
+    }
+  }
+
   Future<List<String>> _getUserSearchHistory(String userId) async {
     try {
       final response = await _supabase

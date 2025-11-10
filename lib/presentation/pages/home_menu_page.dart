@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../core/constants/app_colors.dart';
 import 'game_search_page.dart';
 import 'wishlist_page.dart';
+import 'chatbot_page.dart';
 
 class HomeMenuPage extends StatelessWidget {
   const HomeMenuPage({super.key});
@@ -46,7 +47,7 @@ class HomeMenuPage extends StatelessWidget {
                 ),
               ),
             ),
-            // Content section with two options
+            // Content section with three options
             Expanded(
               child: Container(
                 color: Colors.white,
@@ -68,7 +69,12 @@ class HomeMenuPage extends StatelessWidget {
                         onTap: () => Get.to(() => const WishlistPage()),
                       ),
                       const SizedBox(height: 16),
-                      // Notifications tab removed as requested
+                      _HomeOptionCard(
+                        icon: Icons.chat_bubble_outline,
+                        title: 'Asistente IA',
+                        subtitle: 'Pregunta sobre juegos y precios',
+                        onTap: () => Get.to(() => const ChatbotPage()),
+                      ),
                     ],
                   ),
                 ),
