@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../core/constants/app_colors.dart';
 import 'game_search_page.dart';
 import 'wishlist_page.dart';
-import 'notifications_page.dart';
 
 class HomeMenuPage extends StatelessWidget {
   const HomeMenuPage({super.key});
@@ -69,12 +68,7 @@ class HomeMenuPage extends StatelessWidget {
                         onTap: () => Get.to(() => const WishlistPage()),
                       ),
                       const SizedBox(height: 16),
-                      _HomeOptionCard(
-                        icon: Icons.notifications_none,
-                        title: 'Notificaciones',
-                        subtitle: 'Ve tus alertas y notificaciones',
-                        onTap: () => Get.to(() => const NotificationsPage()),
-                      ),
+                      // Notifications tab removed as requested
                     ],
                   ),
                 ),
