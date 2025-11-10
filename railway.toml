@@ -1,5 +1,6 @@
 [build]
 builder = "NIXPACKS"
+source = "scraper_api"
 
 [deploy]
 healthcheckPath = "/health"
