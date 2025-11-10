@@ -59,6 +59,7 @@ class SupabaseService:
                     'price': steam_data['price'],
                     'discount_percent': steam_data['discount_percent'],
                     'is_free': steam_data['is_free'],
+                    'url': steam_data.get('url'),
                     'scraped_at': steam_data.get('scraped_at')
                 }
             if epic_data:
@@ -66,6 +67,7 @@ class SupabaseService:
                     'price': epic_data['price'],
                     'discount_percent': epic_data['discount_percent'],
                     'is_free': epic_data['is_free'],
+                    'url': epic_data.get('url'),
                     'scraped_at': epic_data.get('scraped_at')
                 }
 

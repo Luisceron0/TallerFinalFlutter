@@ -13,7 +13,7 @@ class SteamScraper(PlaywrightBaseScraper):
     """Scraper for Steam Store"""
 
     BASE_URL = "https://store.steampowered.com"
-    EXCHANGE_RATE_USD_TO_COP = 4000  # Exchange rate: 1 USD = 4000 COP (for display purposes)
+    EXCHANGE_RATE_USD_TO_COP = 1 # Exchange rate: 1 USD = 4000 COP (for display purposes)
 
     async def search_games(self, query: str) -> List[Dict[str, Any]]:
         """Search Steam store for games"""
