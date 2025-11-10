@@ -1,26 +1,29 @@
-# Railway Docker Deployment
+# Railway Docker Deployment - FIXED
 
 ## Issues Identified
 - Railway deployment failed with Flutter detection instead of Python
 - Playwright browser executable not found in Render
 - Gemini model 'gemini-1.5-flash' not found (404 error)
+- Build context was wrong (looking for files in root instead of scraper_api/)
 
 ## Railway Docker Fix Plan
 1. Use Dockerfile instead of Nixpacks
-2. Railway will build from scraper_api/Dockerfile
-3. Update Flutter app to Railway URL
-4. Fix Gemini model name
-5. Update google-generativeai version
+2. Set buildContext to "scraper_api" so Docker finds files correctly
+3. Railway will build from scraper_api/Dockerfile
+4. Update Flutter app to Railway URL
+5. Fix Gemini model name
+6. Update google-generativeai version
 
 ## Steps Completed
 - [x] Change railway.toml to use DOCKERFILE builder
 - [x] Point to scraper_api/Dockerfile
+- [x] Add buildContext = "scraper_api" to fix file paths
 - [x] Keep health check configuration
 - [x] Update Flutter scraper_config.dart to Railway URL
 - [x] Update gemini_service.py to use 'gemini-1.5-pro'
 - [x] Update requirements.txt to latest google-generativeai
 
 ## Next Steps
-- [ ] Deploy to Railway (will use Docker build)
+- [ ] Deploy to Railway (will use Docker build with correct context)
 - [ ] Test API endpoints after deployment
 - [ ] Verify Playwright and Gemini work correctly
