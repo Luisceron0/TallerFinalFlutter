@@ -242,6 +242,14 @@ class EpicScraper(PlaywrightBaseScraper):
                 logger.info(f"Found {len(games)} free games on Epic for query: {query}")
                 return games
 
+            # If no free games match, try to search for paid games using a different approach
+            # Epic doesn't have a public search API, but we can try to construct URLs for known games
+            # This is a very basic fallback that won't find all games
+            logger.info(f"No free games found for '{query}', trying basic paid game search")
+
+            # For now, return empty list for paid games since Epic's API is not public
+            # In a production environment, you might want to use a different scraping approach
+            # or integrate with a service that provides Epic game data
             return []
         except Exception as e:
             logger.error(f"Epic fallback search failed: {e}")

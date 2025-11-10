@@ -26,6 +26,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install Playwright browsers
 RUN playwright install chromium
 
+# Verify Playwright installation
+RUN python -c "import playwright; print('Playwright installed successfully')"
+
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app
