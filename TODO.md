@@ -12,8 +12,10 @@
 
 ## Steps
 - [x] Update scraper_api/render.yaml: Remove PLAYWRIGHT_BROWSERS_PATH env var
-- [x] Update scraper_api/services/gemini_service.py: Change model to 'gemini-1.5-flash'
+- [x] Update scraper_api/services/gemini_service.py: Change model to 'gemini-1.5-pro'
 - [x] Update scraper_api/requirements.txt: Update google-generativeai to latest version
 - [x] Update scraper_api/Dockerfile: Move playwright install after user creation
+- [x] Update scraper_api/scrapers/epic_scraper.py: Add fallback search using Epic free games API
+- [x] Update scraper_api/main.py: Use Epic scraper for wishlist price refresh
 - [x] Run playwright install locally to ensure browsers are available
 - [x] Test API endpoints to verify fixes

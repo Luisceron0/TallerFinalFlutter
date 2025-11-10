@@ -213,6 +213,34 @@ class EpicScraper(PlaywrightBaseScraper):
             # Epic Games doesn't have a public search API, so we'll use a simple fallback
             # This is a basic implementation - Epic's API is not publicly documented
             logger.info(f"Using basic fallback for Epic search: {query}")
+
+            # Try to get free games from Epic's free games API
+            free_games_url = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions"
+            response = requests.get(free_games_url, timeout=10)
+
+            if response.status_code == 200:
+                data = response.json()
+                games = []
+
+                for element in data.get('data', {}).get('Catalog', {}).get('searchStore', {}).get('elements', []):
+                    if element.get('promotions') and element['promotions'].get('promotionalOffers'):
+                        title = element.get('title', '')
+                        if query.lower() in title.lower():
+                            game = {
+                                'title': title,
+                                'epic_slug': element.get('productSlug', ''),
+                                'url': f"https://store.epicgames.com/p/{element.get('productSlug', '')}",
+                                'image_url': element.get('keyImages', [{}])[0].get('url', ''),
+                                'price': 0.0,
+                                'discount_percent': 0,
+                                'is_free': True,
+                                'store': 'epic'
+                            }
+                            games.append(game)
+
+                logger.info(f"Found {len(games)} free games on Epic for query: {query}")
+                return games
+
             return []
         except Exception as e:
             logger.error(f"Epic fallback search failed: {e}")

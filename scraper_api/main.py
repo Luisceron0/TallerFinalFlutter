@@ -221,12 +221,13 @@ async def refresh_wishlist(request: RefreshWishlistRequest, background_tasks: Ba
                         logger.warning(f"Failed to get Steam price for {game['steam_app_id']}: {e}")
 
                 if game.get('epic_slug'):
-                    # Get Epic price (simplified)
+                    # Get Epic price using fallback scraper
                     try:
-                        epic_url = f"https://www.epicgames.com/store/product/{game['epic_slug']}"
-                        response = requests.get(epic_url, timeout=10)
-                        # This would need more complex parsing, for now skip
-                        epic_price = None
+                        from scrapers.epic_scraper import EpicScraper
+                        async with EpicScraper() as scraper:
+                            epic_games = await scraper.search_games(game['title'])
+                            if epic_games:
+                                epic_price = epic_games[0].get('price')
                     except Exception as e:
                         logger.warning(f"Failed to get Epic price for {game['epic_slug']}: {e}")
 
