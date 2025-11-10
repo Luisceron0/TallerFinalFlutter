@@ -263,7 +263,7 @@ async def refresh_wishlist(request: RefreshWishlistRequest, background_tasks: Ba
                             data = response.json()
                             if data.get(str(game['steam_app_id']), {}).get('success'):
                                 price_info = data[str(game['steam_app_id'])].get('data', {}).get('price_overview', {})
-                                steam_price = price_info.get('final', 0) / 10000 if price_info else None
+                                steam_price = price_info.get('final', 0) / 100 if price_info else None
                     except Exception as e:
                         logger.warning(f"Failed to get Steam price for {game['steam_app_id']}: {e}")
 
