@@ -11,6 +11,7 @@ import 'presentation/pages/home_page.dart';
 import 'core/constants/app_colors.dart';
 import 'core/config/supabase_config.dart';
 import 'presentation/controllers/auth_controller.dart';
+import 'presentation/controllers/game_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,8 +23,9 @@ void main() async {
     // Initialize other services that might need env vars
     // ScraperApiService will be initialized when needed
 
-    // Register global AuthController
+    // Register global controllers
     Get.put(AuthController(), permanent: true);
+    Get.put(GameController(), permanent: true);
     runApp(const MyApp());
   } catch (e) {
     // If initialization fails, show error and run app anyway
