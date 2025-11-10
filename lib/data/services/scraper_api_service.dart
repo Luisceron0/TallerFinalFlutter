@@ -103,6 +103,28 @@ class ScraperApiService {
     }
   }
 
+  /// Agregar juego a wishlist
+  Future<Map<String, dynamic>> addToWishlist({
+    required String userId,
+    required String gameId,
+    double? targetPrice,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/api/wishlist/add',
+        data: {
+          'user_id': userId,
+          'game_id': gameId,
+          if (targetPrice != null) 'target_price': targetPrice,
+        },
+      );
+
+      return response.data;
+    } catch (e) {
+      throw Exception('Error adding to wishlist: $e');
+    }
+  }
+
   /// Health check del scraper
   Future<bool> healthCheck() async {
     try {

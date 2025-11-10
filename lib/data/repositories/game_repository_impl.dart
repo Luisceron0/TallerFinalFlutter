@@ -74,6 +74,23 @@ class GameRepositoryImpl implements GameRepository {
     }
   }
 
+  @override
+  Future<void> addToWishlist({
+    required String userId,
+    required String gameId,
+    double? targetPrice,
+  }) async {
+    try {
+      await _scraperApiService.addToWishlist(
+        userId: userId,
+        gameId: gameId,
+        targetPrice: targetPrice,
+      );
+    } catch (e) {
+      throw Exception('Error adding to wishlist: $e');
+    }
+  }
+
   /// Guardar búsqueda del usuario para análisis de IA
   Future<void> _saveUserSearch(String userId, String query) async {
     try {

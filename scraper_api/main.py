@@ -71,6 +71,11 @@ class RefreshWishlistResponse(BaseModel):
     notifications_created: int
     ai_insights_generated: int
 
+class AddToWishlistRequest(BaseModel):
+    user_id: str
+    game_id: str
+    target_price: Optional[float] = None
+
 def search_steam_games(query: str) -> List[Dict[str, Any]]:
     """Search Steam games using their public API"""
     try:
@@ -410,6 +415,47 @@ async def refresh_wishlist(request: RefreshWishlistRequest, background_tasks: Ba
     except Exception as e:
         logger.error(f"Wishlist refresh failed: {e}")
         raise HTTPException(status_code=500, detail=f"Refresh failed: {str(e)}")
+
+@app.post("/api/wishlist/add")
+async def add_to_wishlist(request: AddToWishlistRequest):
+    """
+    Add a game to user's wishlist
+    """
+    try:
+        logger.info(f"Adding game {request.game_id} to wishlist for user {request.user_id}")
+
+        # Check if game exists
+        game = await supabase_service.get_game_by_id(request.game_id)
+        if not game:
+            raise HTTPException(status_code=404, detail="Game not found")
+
+        # Check if already in wishlist
+        existing = supabase_service.client.table('wishlist').select('*').eq('user_id', request.user_id).eq('game_id', request.game_id).execute()
+
+        if existing.data:
+            # Update target price if provided
+            if request.target_price is not None:
+                supabase_service.client.table('wishlist').update({
+                    'target_price': request.target_price
+                }).eq('user_id', request.user_id).eq('game_id', request.game_id).execute()
+        else:
+            # Add to wishlist
+            wishlist_data = {
+                'user_id': request.user_id,
+                'game_id': request.game_id
+            }
+            if request.target_price is not None:
+                wishlist_data['target_price'] = request.target_price
+
+            supabase_service.client.table('wishlist').insert(wishlist_data).execute()
+
+        return {"message": "Game added to wishlist successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to add game to wishlist: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to add to wishlist: {str(e)}")
 
 @app.on_event("startup")
 async def startup_event():

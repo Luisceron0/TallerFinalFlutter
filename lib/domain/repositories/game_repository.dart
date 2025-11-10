@@ -15,4 +15,11 @@ abstract class GameRepository {
     required String userId,
     required List<String> gameIds,
   });
+
+  /// Agregar juego a wishlist
+  Future<void> addToWishlist({
+    required String userId,
+    required String gameId,
+    double? targetPrice,
+  });
 }
