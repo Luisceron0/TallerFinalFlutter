@@ -23,6 +23,6 @@
 - [x] Remove Railway and Fly configuration files
 
 ## Next Steps
-- [ ] Deploy to Render (will use render.yaml configuration)
+- [x] Deploy to Render (will use render.yaml configuration)
 - [ ] Test API endpoints after deployment
 - [ ] Verify Playwright and Gemini work correctly
