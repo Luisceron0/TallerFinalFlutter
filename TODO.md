@@ -1,5 +1,5 @@
 
-# Railway Docker Deployment - DOCKERFILE PATH FIXED
+# Railway Docker Deployment - RAILWAY.TOML MOVED TO SCRAPER_API
 
 ## Issues Identified
 - Railway deployment failed with Flutter detection instead of Python
@@ -33,7 +33,8 @@
 - [x] Update gemini_service.py to use 'gemini-1.5-pro'
 - [x] Update requirements.txt to latest google-generativeai (0.9.0)
 - [x] Verify requirements.txt exists and is accessible
-- [x] Add dockerfilePath = "Dockerfile" to railway.toml (relative to buildContext)
+- [x] Move railway.toml to scraper_api/ directory (Railway looks for it there)
+- [x] Simplify railway.toml to just builder = "DOCKERFILE" (auto-detects Dockerfile)
 
 ## Next Steps
 - [ ] Deploy to Railway (will use Docker build with correct context and Dockerfile)
