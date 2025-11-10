@@ -29,9 +29,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   void _initializeAIService() {
-    if (AppConfig.geminiApiKey != null && AppConfig.geminiApiKey!.isNotEmpty) {
-      _aiService = GeminiAIService(AppConfig.geminiApiKey!);
-    }
+    _aiService = GeminiAIService();
   }
 
   void _addWelcomeMessage() {
@@ -71,11 +69,13 @@ class _ChatbotPageState extends State<ChatbotPage> {
     _scrollToBottom();
 
     try {
-      final response = await _generateAIResponse(message, user.id);
+      final response = await _aiService!.generateChatResponse(message);
       setState(() {
         _messages.add({
           'type': 'bot',
-          'content': response,
+          'content':
+              response ??
+              'Lo siento, tuve un problema procesando tu mensaje. ¿Puedes intentarlo de nuevo?',
           'timestamp': DateTime.now(),
         });
         _isTyping = false;
@@ -93,71 +93,6 @@ class _ChatbotPageState extends State<ChatbotPage> {
     }
 
     _scrollToBottom();
-  }
-
-  Future<String> _generateAIResponse(String userMessage, String userId) async {
-    // Get user's game data from Supabase
-    final userGames = await _getUserGameData(userId);
-
-    final prompt =
-        """
-Eres un asistente especializado en juegos de PC. El usuario te pregunta: "$userMessage"
-
-Información del usuario:
-- Juegos en wishlist: ${userGames['wishlist'].join(', ')}
-- Búsquedas recientes: ${userGames['searches'].join(', ')}
-- Juegos populares actuales: ${userGames['popular'].join(', ')}
-
-Responde de manera útil y concisa. Si mencionan precios, enfócate en rangos realistas (€10-60 para juegos AAA, €5-30 para indie).
-Si preguntan por recomendaciones, sugiere juegos específicos con precios aproximados.
-Mantén un tono amigable y experto en gaming.
-""";
-
-    final response = await _aiService!.generateChatResponse(prompt);
-    return response ??
-        'Lo siento, no pude generar una respuesta en este momento.';
-  }
-
-  Future<Map<String, dynamic>> _getUserGameData(String userId) async {
-    try {
-      // Get wishlist
-      final wishlistResponse = await _client
-          .from('wishlist')
-          .select('games(title)')
-          .eq('user_id', userId)
-          .limit(10);
-
-      final wishlist = wishlistResponse
-          .map((item) => item['games']['title'] as String)
-          .toList();
-
-      // Get recent searches
-      final searchesResponse = await _client
-          .from('user_searches')
-          .select('query')
-          .eq('user_id', userId)
-          .order('searched_at', ascending: false)
-          .limit(5);
-
-      final searches = searchesResponse
-          .map((item) => item['query'] as String)
-          .toList();
-
-      // Get popular games
-      final popularResponse = await _client
-          .from('games')
-          .select('title')
-          .order('created_at', ascending: false)
-          .limit(5);
-
-      final popular = popularResponse
-          .map((item) => item['title'] as String)
-          .toList();
-
-      return {'wishlist': wishlist, 'searches': searches, 'popular': popular};
-    } catch (e) {
-      return {'wishlist': [], 'searches': [], 'popular': []};
-    }
   }
 
   void _scrollToBottom() {

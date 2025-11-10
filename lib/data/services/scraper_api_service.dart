@@ -1,17 +1,17 @@
 import 'package:dio/dio.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/config/scraper_config.dart';
 
 import '../../domain/entities/game_entity.dart';
 import '../models/game_model.dart';
-import '../../services/gemini_ai_service.dart';
 
 class ScraperApiService {
   late final Dio _dio;
-  GeminiAIService? _aiService;
 
-  ScraperApiService({GeminiAIService? aiService}) : _aiService = aiService {
+  ScraperApiService() {
     _initializeDio();
   }
+
   void _initializeDio() {
     try {
       _dio = Dio(
@@ -131,35 +131,27 @@ class ScraperApiService {
     }
   }
 
-  /// Analizar decisión de compra con IA (ahora local en Flutter)
+  /// Analizar decisión de compra con IA (usando Supabase Edge Functions)
   Future<Map<String, dynamic>> analyzePurchaseDecision({
     required String gameId,
     required String userId,
   }) async {
     try {
-      // Usar GeminiAIService local para análisis
-      if (_aiService != null) {
-        // Obtener datos del juego desde Supabase directamente
-        final gameResponse = await _dio.get('/api/game/$gameId');
-        final gameData = gameResponse.data;
+      // Usar Supabase Edge Function para análisis de IA
+      final supabase = Supabase.instance.client;
 
-        // Obtener historial de precios
-        final priceHistoryResponse = await _dio.get(
-          '/api/game/$gameId/price-history',
+      final response = await supabase.functions.invoke(
+        'analyze-purchase',
+        body: {'game_id': gameId, 'user_id': userId},
+      );
+
+      if (response.status != 200) {
+        throw Exception(
+          'Error calling analyze-purchase function: ${response.status}',
         );
-        final priceHistory = priceHistoryResponse.data;
-
-        final analysis = await _aiService!.analyzePurchaseDecision(
-          gameTitle: gameData['title'] ?? '',
-          steamPrice: gameData['prices']?['steam']?['price'],
-          epicPrice: gameData['prices']?['epic']?['price'],
-          userId: userId,
-        );
-
-        return analysis ?? {};
-      } else {
-        throw Exception('AI service not available');
       }
+
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       throw Exception('Error analyzing purchase decision: $e');
     }
