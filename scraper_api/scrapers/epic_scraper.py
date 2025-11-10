@@ -206,3 +206,24 @@ class EpicScraper(PlaywrightBaseScraper):
         except ValueError:
             logger.warning(f"Could not parse Epic price: {price_text}")
             return None
+
+    def requests_fallback_search(self, query: str) -> List[Dict[str, Any]]:
+        """Fallback search using Epic Games API when Playwright fails"""
+        try:
+            # Epic Games doesn't have a public search API, so we'll use a simple fallback
+            # This is a basic implementation - Epic's API is not publicly documented
+            logger.info(f"Using basic fallback for Epic search: {query}")
+            return []
+        except Exception as e:
+            logger.error(f"Epic fallback search failed: {e}")
+            return []
+
+    def requests_fallback_details(self, slug: str) -> Dict[str, Any]:
+        """Fallback details using Epic Games API when Playwright fails"""
+        try:
+            # Epic Games doesn't have a public details API, so we'll use a simple fallback
+            logger.info(f"Using basic fallback for Epic details: {slug}")
+            return {}
+        except Exception as e:
+            logger.error(f"Epic fallback details failed: {e}")
+            return {}

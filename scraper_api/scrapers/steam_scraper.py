@@ -188,3 +188,100 @@ class SteamScraper(PlaywrightBaseScraper):
         except ValueError:
             logger.warning(f"Could not parse price: {price_text}")
             return None
+
+    def requests_fallback_search(self, query: str) -> List[Dict[str, Any]]:
+        """Fallback search using Steam API when Playwright fails"""
+        try:
+            # Use Steam's search API
+            search_url = f"https://store.steampowered.com/api/storesearch/?term={query}&l=english&cc=US"
+            response = requests.get(search_url, timeout=10)
+
+            if response.status_code == 200:
+                data = response.json()
+                games = []
+
+                for item in data.get('items', [])[:10]:  # Limit to 10 results
+                    # Get detailed price info from appdetails API
+                    app_id = item.get('id')
+                    price = None
+                    is_free = False
+
+                    if app_id:
+                        try:
+                            details_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc=US"
+                            details_response = requests.get(details_url, timeout=10)
+
+                            if details_response.status_code == 200:
+                                details_data = details_response.json()
+                                if str(app_id) in details_data and details_data[str(app_id)].get('success'):
+                                    app_data = details_data[str(app_id)]['data']
+                                    price_info = app_data.get('price_overview', {})
+
+                                    if price_info:
+                                        price = price_info.get('final', 0) / 100.0  # Convert cents to dollars
+                                        is_free = price == 0
+                                    else:
+                                        is_free = app_data.get('is_free', False)
+                        except Exception as e:
+                            logger.warning(f"Failed to get price for app {app_id}: {e}")
+
+                    game = {
+                        'title': item.get('name', ''),
+                        'steam_app_id': app_id,
+                        'url': f"https://store.steampowered.com/app/{app_id}/" if app_id else None,
+                        'image_url': item.get('tiny_image'),
+                        'price': price,
+                        'discount_percent': 0,  # API doesn't provide discount info easily
+                        'is_free': is_free,
+                        'store': 'steam'
+                    }
+                    games.append(game)
+
+                logger.info(f"Found {len(games)} games on Steam (API fallback) for query: {query}")
+                return games
+            else:
+                logger.warning(f"Steam API search failed with status {response.status_code}")
+                return []
+
+        except Exception as e:
+            logger.error(f"Steam API fallback search failed: {e}")
+            return []
+
+    def requests_fallback_details(self, app_id: str) -> Dict[str, Any]:
+        """Fallback details using Steam API when Playwright fails"""
+        try:
+            details_url = f"https://store.steampowered.com/api/appdetails?appids={app_id}&cc=US"
+            response = requests.get(details_url, timeout=10)
+
+            if response.status_code == 200:
+                data = response.json()
+
+                if str(app_id) in data and data[str(app_id)].get('success'):
+                    app_data = data[str(app_id)]['data']
+
+                    price = None
+                    is_free = app_data.get('is_free', False)
+
+                    price_info = app_data.get('price_overview', {})
+                    if price_info:
+                        price = price_info.get('final', 0) / 100.0  # Convert cents to dollars
+
+                    return {
+                        'title': app_data.get('name', ''),
+                        'description': app_data.get('short_description', ''),
+                        'image_url': app_data.get('header_image', ''),
+                        'price': price,
+                        'discount_percent': price_info.get('discount_percent', 0) if price_info else 0,
+                        'is_free': is_free or price == 0,
+                        'store': 'steam'
+                    }
+                else:
+                    logger.warning(f"Steam API details failed for app {app_id}")
+                    return {}
+            else:
+                logger.warning(f"Steam API details request failed with status {response.status_code}")
+                return {}
+
+        except Exception as e:
+            logger.error(f"Steam API fallback details failed: {e}")
+            return {}
