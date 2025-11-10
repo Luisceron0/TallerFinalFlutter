@@ -15,7 +15,6 @@ import uvicorn
 import requests
 
 from services.supabase_service import SupabaseService
-from services.gemini_service import GeminiService
 from core.config import settings
 
 # Configure logging
@@ -40,7 +39,6 @@ app.add_middleware(
 
 # Initialize services
 supabase_service = SupabaseService()
-gemini_service = GeminiService()
 
 # Pydantic models
 class SearchRequest(BaseModel):
