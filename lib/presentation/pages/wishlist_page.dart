@@ -367,7 +367,7 @@ class _WishlistPageState extends State<WishlistPage> {
                                     game,
                                   ).toEntity();
                                   Get.toNamed(
-                                    '/game-detail',
+                                    '/GameDetailPage',
                                     arguments: gameEntity,
                                   );
                                 },

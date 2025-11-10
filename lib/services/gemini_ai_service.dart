@@ -7,7 +7,7 @@ class GeminiAIService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   GeminiAIService(String apiKey) {
-    _model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+    _model = GenerativeModel(model: 'gemini-1.5-flash-latest', apiKey: apiKey);
   }
 
   Future<String?> generateQuickTip({

@@ -5,6 +5,7 @@ import '../../core/config/app_config.dart';
 import '../../domain/entities/game_entity.dart';
 import '../models/game_model.dart';
 import '../../services/gemini_ai_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ScraperApiService {
   late final Dio _dio;
@@ -167,10 +168,35 @@ class ScraperApiService {
 
   Future<Map<String, dynamic>> _getGameData(String gameId) async {
     try {
-      final response = await _dio.get('/api/game/$gameId');
-      return response.data;
+      // Consultar directamente desde Supabase en lugar del endpoint inexistente
+      final supabase = Supabase.instance.client;
+      final response = await supabase
+          .from('games')
+          .select(
+            'title, price_history(price, store, discount_percent, is_free)',
+          )
+          .eq('id', gameId)
+          .single();
+
+      final priceHistory = response['price_history'] as List<dynamic>? ?? [];
+      double? steamPrice;
+      double? epicPrice;
+
+      for (var price in priceHistory) {
+        if (price['store'] == 'steam' && !price['is_free']) {
+          steamPrice = (price['price'] as num).toDouble();
+        } else if (price['store'] == 'epic' && !price['is_free']) {
+          epicPrice = (price['price'] as num).toDouble();
+        }
+      }
+
+      return {
+        'title': response['title'] ?? 'Unknown Game',
+        'steam_price': steamPrice,
+        'epic_price': epicPrice,
+      };
     } catch (e) {
-      // Si no hay endpoint, devolver datos básicos
+      // Si falla la consulta, devolver datos básicos
       return {'title': 'Unknown Game', 'steam_price': null, 'epic_price': null};
     }
   }
