@@ -15,7 +15,7 @@ class SteamScraper(PlaywrightBaseScraper):
     BASE_URL = "https://store.steampowered.com"
     EXCHANGE_RATE_USD_TO_COP = 1 # Exchange rate: 1 USD = 4000 COP (for display purposes)
 
-    async def search_games(self, query: str) -> List[Dict[str, Any]]:
+    async def _search_games_playwright(self, query: str) -> List[Dict[str, Any]]:
         """Search Steam store for games"""
         games = []
 
@@ -98,7 +98,7 @@ class SteamScraper(PlaywrightBaseScraper):
 
         return games
 
-    async def get_game_details(self, app_id: str) -> Dict[str, Any]:
+    async def _get_game_details_playwright(self, app_id: str) -> Dict[str, Any]:
         """Get detailed information for a specific Steam game"""
         try:
             page = await self.create_page()

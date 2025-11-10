@@ -77,28 +77,26 @@ class AddToWishlistRequest(BaseModel):
     game_id: str
     target_price: Optional[float] = None
 
-def search_steam_games(query: str) -> List[Dict[str, Any]]:
+async def search_steam_games(query: str) -> List[Dict[str, Any]]:
     """Search Steam games using Playwright scraper"""
     try:
         from scrapers.steam_scraper import SteamScraper
 
-        scraper = SteamScraper()
-        games = scraper.search_games(query)
-        scraper.close()
+        async with SteamScraper() as scraper:
+            games = await scraper.search_games(query)
 
         return games
     except Exception as e:
         logger.error(f"Steam search failed: {e}")
         return []
 
-def search_epic_games(query: str) -> List[Dict[str, Any]]:
+async def search_epic_games(query: str) -> List[Dict[str, Any]]:
     """Search Epic Games using Playwright scraper"""
     try:
         from scrapers.epic_scraper import EpicScraper
 
-        scraper = EpicScraper()
-        games = scraper.search_games(query)
-        scraper.close()
+        async with EpicScraper() as scraper:
+            games = await scraper.search_games(query)
 
         return games
     except Exception as e:
@@ -126,8 +124,8 @@ async def search_games(request: SearchRequest, background_tasks: BackgroundTasks
         logger.info(f"Searching for: {request.query}")
 
         # Search both stores using simple HTTP requests
-        steam_results = search_steam_games(request.query)
-        epic_results = search_epic_games(request.query)
+        steam_results = await search_steam_games(request.query)
+        epic_results = await search_epic_games(request.query)
 
         # Match and merge results
         merged_results = await supabase_service.match_and_merge_results(

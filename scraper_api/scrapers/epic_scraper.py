@@ -14,7 +14,7 @@ class EpicScraper(PlaywrightBaseScraper):
 
     BASE_URL = "https://store.epicgames.com"
     EXCHANGE_RATE_EUR_TO_COP = 1
-    async def search_games(self, query: str) -> List[Dict[str, Any]]:
+    async def _search_games_playwright(self, query: str) -> List[Dict[str, Any]]:
         """Search Epic Games store for games"""
         games = []
 
@@ -114,7 +114,7 @@ class EpicScraper(PlaywrightBaseScraper):
 
         return games
 
-    async def get_game_details(self, slug: str) -> Dict[str, Any]:
+    async def _get_game_details_playwright(self, slug: str) -> Dict[str, Any]:
         """Get detailed information for a specific Epic game"""
         try:
             page = await self.create_page()
