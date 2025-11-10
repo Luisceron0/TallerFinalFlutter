@@ -16,11 +16,11 @@ services:
     healthCheckPath: /health
     envVars:
       - key: SUPABASE_URL
-        sync: false
+        value: https://gjqybghjbvgncetjicsa.supabase.co
       - key: SUPABASE_SERVICE_KEY
-        sync: false
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdqcXliZ2hqYnZnbmNldGppY3NhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjE4OTM3MywiZXhwIjoyMDc3NzY1MzczfQ.M2dX9HBgrcUxPwLs25gbM0QJynoq1xyyFtXn4GAF0Z8
       - key: GEMINI_API_KEY
-        sync: false
+        value: AIzaSyArBovqbaqSea4-ncIHAOL7BzmMzNm2de0
       - key: DEBUG_MODE
         value: false
       - key: PYTHON_VERSION
