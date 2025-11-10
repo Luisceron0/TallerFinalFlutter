@@ -8,13 +8,12 @@
 - [x] Remover endpoints de IA de Render API
 - [x] Actualizar llamadas desde Flutter
 - [x] Testing de funcionalidad offline
-- [x] Crear Supabase Edge Functions (generate-tip, analyze-purchase, chat-response)
-- [x] Actualizar ChatbotPage para usar nuevo servicio
+- [x] Habilitar Playwright en scraper para Render deployment
+- [x] Actualizar requirements.txt con Playwright
+- [x] Actualizar Dockerfile para instalar Playwright browsers
+- [x] Actualizar start.sh para instalar Playwright browsers
 
-## Beneficios logrados:
-✅ Eliminación de Render para IA - Toda la IA corre en el dispositivo del usuario
-✅ Mejor rendimiento - Sin llamadas de red para análisis de IA
-✅ Privacidad mejorada - Datos sensibles no salen del dispositivo
-✅ Offline capable - Funciona sin conexión a internet
-✅ Más simple - Un solo backend (Supabase)
-✅ Costo reducido - Sin costos de hosting para IA
+## Próximos pasos:
+- [ ] Desplegar cambios en Render
+- [ ] Verificar que el scraper funciona correctamente
+- [ ] Testing end-to-end de la funcionalidad IA

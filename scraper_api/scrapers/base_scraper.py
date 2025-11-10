@@ -20,7 +20,7 @@ class PlaywrightBaseScraper(ABC):
         self.headless = headless
         self.browser: Optional[Browser] = None
         self.context: Optional[BrowserContext] = None
-        self.use_playwright = False  # Always use requests fallback for Render
+        self.use_playwright = True  # Enable Playwright for Render deployment
 
     async def __aenter__(self):
         """Async context manager entry"""

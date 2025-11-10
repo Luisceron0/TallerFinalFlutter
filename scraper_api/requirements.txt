@@ -19,11 +19,9 @@ pydantic-settings==2.1.0
 # Utilities
 asyncio-mqtt==0.16.1  # For potential future features
 
-# Alternative scraping approach (fallback)
+# Web scraping with Playwright (enabled for Render)
 requests==2.31.0
 lxml==4.9.3
-
-# Web scraping (removed Playwright for Render deployment)
-# playwright==1.40.0
-# beautifulsoup4==4.12.2
-# aiohttp==3.9.1
+playwright==1.40.0
+beautifulsoup4==4.12.2
+aiohttp==3.9.1

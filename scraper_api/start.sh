@@ -4,8 +4,8 @@ set -e
 # Install Python dependencies
 pip install --no-cache-dir -r requirements.txt
 
-# No Playwright installation needed for Render deployment
-echo "Starting application without Playwright (using requests fallback)"
+# Install Playwright browsers for Render deployment
+playwright install chromium
 
 # Start the application
 python main.py

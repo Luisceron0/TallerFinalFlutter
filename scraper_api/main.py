@@ -89,7 +89,7 @@ async def search_steam_games(query: str) -> List[Dict[str, Any]]:
         # Use requests fallback
         try:
             scraper = SteamScraper()
-            scraper.use_playwright = False  # Force requests fallback
+            scraper.use_playwright = True  # Enable Playwright for Render deployment
             return scraper.requests_fallback_search(query)
         except Exception as fallback_e:
             logger.error(f"Steam fallback search also failed: {fallback_e}")
@@ -109,7 +109,7 @@ async def search_epic_games(query: str) -> List[Dict[str, Any]]:
         # Use requests fallback
         try:
             scraper = EpicScraper()
-            scraper.use_playwright = False  # Force requests fallback
+            scraper.use_playwright = True  # Enable Playwright for Render deployment
             return scraper.requests_fallback_search(query)
         except Exception as fallback_e:
             logger.error(f"Epic fallback search also failed: {fallback_e}")
