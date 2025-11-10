@@ -104,4 +104,21 @@ class GameRepositoryImpl implements GameRepository {
       print('Warning: Could not save user search: $e');
     }
   }
+
+  @override
+  Future<void> removeFromWishlist({
+    required String userId,
+    required String gameId,
+  }) async {
+    try {
+      // Since the API doesn't have a remove endpoint, we'll handle it directly with Supabase
+      await _client
+          .from('wishlist')
+          .delete()
+          .eq('user_id', userId)
+          .eq('game_id', gameId);
+    } catch (e) {
+      throw Exception('Error removing from wishlist: $e');
+    }
+  }
 }

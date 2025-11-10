@@ -77,32 +77,13 @@ class AddToWishlistRequest(BaseModel):
     target_price: Optional[float] = None
 
 def search_steam_games(query: str) -> List[Dict[str, Any]]:
-    """Search Steam games using their public API"""
+    """Search Steam games using Playwright scraper"""
     try:
-        search_url = f"https://store.steampowered.com/api/storesearch/?term={query}&l=english&cc=CO"
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        from scrapers.steam_scraper import SteamScraper
 
-        response = requests.get(search_url, headers=headers, timeout=10)
-        response.raise_for_status()
-
-        data = response.json()
-        games = []
-
-        for item in data.get('items', [])[:10]:
-            price_info = item.get('price', {})
-            # Steam API with cc=CO returns prices in COP
-            cop_price = price_info.get('final', 0) if price_info else 0
-
-            games.append({
-                'title': item.get('name', ''),
-                'steam_app_id': str(item.get('id', '')),
-                'url': f"https://store.steampowered.com/app/{item.get('id', '')}",
-                'image_url': item.get('tiny_image', ''),
-                'price': cop_price,
-                'discount_percent': price_info.get('discount_percent', 0) if price_info else 0,
-                'is_free': price_info.get('final', 0) == 0 if price_info else False,
-                'store': 'steam'
-            })
+        scraper = SteamScraper()
+        games = scraper.search_games(query)
+        scraper.close()
 
         return games
     except Exception as e:
@@ -110,141 +91,14 @@ def search_steam_games(query: str) -> List[Dict[str, Any]]:
         return []
 
 def search_epic_games(query: str) -> List[Dict[str, Any]]:
-    """Search Epic Games using their public API"""
+    """Search Epic Games using Playwright scraper"""
     try:
-        # Use Epic's GraphQL API for better results
-        search_url = "https://www.epicgames.com/graphql"
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Content-Type': 'application/json',
-        }
+        from scrapers.epic_scraper import EpicScraper
 
-        # GraphQL query for searching games
-        graphql_query = {
-            "query": """
-            query searchStoreQuery($category: String, $count: Int, $country: String!, $keywords: String, $locale: String, $sortBy: String, $sortDir: String, $start: Int, $tag: String, $withPrice: Boolean = true) {
-              Catalog {
-                searchStore(
-                  category: $category
-                  count: $count
-                  country: $country
-                  keywords: $keywords
-                  locale: $locale
-                  sortBy: $sortBy
-                  sortDir: $sortDir
-                  start: $start
-                  tag: $tag
-                  withPrice: $withPrice
-                ) {
-                  elements {
-                    title
-                    id
-                    namespace
-                    description
-                    effectiveDate
-                    keyImages {
-                      type
-                      url
-                    }
-                    price(country: $country) {
-                      totalPrice {
-                        discountPrice
-                        originalPrice
-                        voucherDiscount
-                        discount
-                        fmtPrice(locale: $locale) {
-                          originalPrice
-                          discountPrice
-                          intermediatePrice
-                        }
-                      }
-                    }
-                    promotions {
-                      promotionalOffers {
-                        promotionalOffers {
-                          discountSetting {
-                            discountType
-                            discountPercentage
-                          }
-                          startDate
-                          endDate
-                        }
-                      }
-                    }
-                    urlSlug
-                    url
-                    tags {
-                      id
-                    }
-                    categories {
-                      path
-                    }
-                  }
-                  paging {
-                    count
-                    total
-                  }
-                }
-              }
-            }
-            """,
-            "variables": {
-                "category": "games",
-                "count": 10,
-                "country": "CO",
-                "keywords": query,
-                "locale": "es-CO",
-                "sortBy": "relevancy",
-                "sortDir": "DESC",
-                "start": 0,
-                "withPrice": True
-            }
-        }
+        scraper = EpicScraper()
+        games = scraper.search_games(query)
+        scraper.close()
 
-        response = requests.post(search_url, json=graphql_query, headers=headers, timeout=15)
-        response.raise_for_status()
-
-        data = response.json()
-        games = []
-
-        elements = data.get('data', {}).get('Catalog', {}).get('searchStore', {}).get('elements', [])
-
-        for item in elements[:10]:
-            # Extract price information
-            price_info = item.get('price', {}).get('totalPrice', {})
-            original_price = price_info.get('originalPrice', 0)
-            discount_price = price_info.get('discountPrice', 0)
-            discount = price_info.get('discount', 0)
-
-            # Use discount price if available, otherwise original price
-            current_price_usd = discount_price if discount_price > 0 else original_price
-            current_price_usd = current_price_usd / 10000 if current_price_usd > 0 else 0
-
-            # Convert EUR to COP (exchange rate: 1 EUR ≈ 4500 COP)
-            cop_price = current_price_usd * 4500 if current_price_usd > 0 else 0
-
-            # Get image URL
-            image_url = ''
-            key_images = item.get('keyImages', [])
-            for img in key_images:
-                if img.get('type') == 'Thumbnail':
-                    image_url = img.get('url', '')
-                    break
-            if not image_url and key_images:
-                image_url = key_images[0].get('url', '')
-
-            games.append({
-                'title': item.get('title', ''),
-                'epic_slug': item.get('urlSlug', ''),
-                'url': item.get('url', ''),
-                'image_url': image_url,
-                'price': cop_price,
-                'discount_percent': discount,
-                'is_free': current_price_usd == 0,
-                'store': 'epic'
-            })
-
-        logger.info(f"Found {len(games)} games on Epic for query: {query}")
         return games
     except Exception as e:
         logger.error(f"Epic search failed: {e}")

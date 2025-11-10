@@ -102,4 +102,54 @@ class GameController extends GetxController {
       return null;
     }
   }
+
+  /// Agregar juego a wishlist
+  Future<void> addToWishlist({
+    required String userId,
+    required String gameId,
+    double? targetPrice,
+  }) async {
+    try {
+      _isLoading.value = true;
+      _errorMessage.value = '';
+
+      await _gameRepository.addToWishlist(
+        userId: userId,
+        gameId: gameId,
+        targetPrice: targetPrice,
+      );
+
+      Get.snackbar('Éxito', 'Juego agregado a tu wishlist');
+    } catch (e) {
+      _errorMessage.value = 'Error adding to wishlist: $e';
+      Get.snackbar('Error', _errorMessage.value);
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  /// Remover juego de wishlist
+  Future<void> removeFromWishlist({
+    required String userId,
+    required String gameId,
+  }) async {
+    try {
+      _isLoading.value = true;
+      _errorMessage.value = '';
+
+      // For now, we'll need to implement this in the repository
+      // Since the API doesn't have a remove endpoint, we'll handle it directly
+      await _gameRepository.removeFromWishlist(
+        userId: userId,
+        gameId: gameId,
+      );
+
+      Get.snackbar('Éxito', 'Juego removido de tu wishlist');
+    } catch (e) {
+      _errorMessage.value = 'Error removing from wishlist: $e';
+      Get.snackbar('Error', _errorMessage.value);
+    } finally {
+      _isLoading.value = false;
+    }
+  }
 }

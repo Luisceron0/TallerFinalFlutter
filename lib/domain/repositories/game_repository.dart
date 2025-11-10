@@ -22,4 +22,10 @@ abstract class GameRepository {
     required String gameId,
     double? targetPrice,
   });
+
+  /// Remover juego de wishlist
+  Future<void> removeFromWishlist({
+    required String userId,
+    required String gameId,
+  });
 }

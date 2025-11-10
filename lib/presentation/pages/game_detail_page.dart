@@ -226,26 +226,22 @@ class _GameDetailPageState extends State<GameDetailPage> {
       }
 
       if (_isInWishlist) {
-        // Remove from wishlist
-        await _client
-            .from('wishlist')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('game_id', widget.game.id);
+        // Remove from wishlist using controller
+        await _gameController.removeFromWishlist(
+          userId: user.id,
+          gameId: widget.game.id,
+        );
 
         setState(() => _isInWishlist = false);
-        Get.snackbar('Removido', 'Juego removido de tu wishlist');
       } else {
-        // Add to wishlist
-        await _client.from('wishlist').insert({
-          'user_id': user.id,
-          'game_id': widget.game.id,
-          'target_price': null,
-          'priority': 3,
-        });
+        // Add to wishlist using controller
+        await _gameController.addToWishlist(
+          userId: user.id,
+          gameId: widget.game.id,
+          targetPrice: null,
+        );
 
         setState(() => _isInWishlist = true);
-        Get.snackbar('Agregado', 'Juego agregado a tu wishlist');
       }
     } catch (e) {
       Get.snackbar('Error', 'No se pudo actualizar la wishlist: $e');
