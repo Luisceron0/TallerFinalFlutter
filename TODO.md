@@ -1,46 +1,25 @@
-# Migration to Railway - COMPLETED
+# Railway Deployment Fix
 
-## Issues with Render
-- Playwright browser executable not found due to incorrect path in render.yaml
+## Issues Identified
+- Railway deployment failed with Flutter detection instead of Python
+- Playwright browser executable not found in Render
 - Gemini model 'gemini-1.5-flash' not found (404 error)
-- Docker-based deployment issues with Playwright
-- Railway was detecting Flutter instead of Python API
 
-## Railway Migration Plan
-1. Create Railway configuration files
-2. Set up Nixpacks for native Python deployment
-3. Configure environment variables
-4. Test deployment
+## Railway Fix Plan
+1. Simplify railway.toml to use direct Python command
+2. Keep Nixpacks configuration for Playwright
+3. Update Flutter app back to Railway URL
+4. Fix Gemini model name
+5. Update google-generativeai version
 
 ## Steps Completed
-- [x] Create railway.toml in scraper_api/ with full Nixpacks config
-- [x] Create start.sh script for Railway deployment
-- [x] Remove old railway.json and nixpacks.toml from scraper_api/
-- [x] Create .env.example template
-- [x] Create README.md with deployment instructions
-- [x] Remove Docker dependency (using native Python deployment)
-- [x] Remove all Render-specific files (render.yaml, Dockerfile)
-- [x] Update main.py to clarify local development usage
-- [x] Update Flutter scraper_config.dart to use Railway URL
-- [x] Create .env files for both Python API and Flutter app
-- [x] Ready for Railway deployment - no local Python execution needed
+- [x] Simplify railway.toml start command to "python main.py"
+- [x] Keep Nixpacks phases for Playwright installation
+- [x] Update Flutter scraper_config.dart back to Railway URL
+- [x] Update gemini_service.py to use 'gemini-1.5-pro'
+- [x] Update requirements.txt to latest google-generativeai
 
-## Environment Variables Configured
-### Python API (scraper_api/.env)
-- SUPABASE_URL
-- SUPABASE_SERVICE_KEY
-- GEMINI_API_KEY
-- DEBUG_MODE
-
-### Flutter App (.env)
-- SUPABASE_URL
-- SUPABASE_ANON_KEY
-- GEMINI_API_KEY
-- DEBUG_MODE
-
-## Railway Configuration
-- railway.toml in scraper_api/ with full Nixpacks config
-- start.sh script handles Playwright installation and app startup
-- Playwright chromium installation with dependencies
-- Health check at /health endpoint
-- Proper start command: ./start.sh
+## Next Steps
+- [ ] Deploy to Railway with simplified configuration
+- [ ] Test API endpoints after deployment
+- [ ] Verify Playwright and Gemini work correctly

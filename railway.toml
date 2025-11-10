@@ -24,4 +24,4 @@ cmds = [
 ]
 
 [build.nixpacks.start]
-cmd = "./start.sh"
+cmd = "python main.py"
