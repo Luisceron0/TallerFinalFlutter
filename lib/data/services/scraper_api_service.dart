@@ -1,15 +1,22 @@
 import 'package:dio/dio.dart';
 import '../../core/config/scraper_config.dart';
+import '../../core/config/app_config.dart';
+
 import '../../domain/entities/game_entity.dart';
 import '../models/game_model.dart';
+import '../../services/gemini_ai_service.dart';
 
 class ScraperApiService {
   late final Dio _dio;
+  GeminiAIService? _aiService;
 
-  ScraperApiService() {
+  ScraperApiService({GeminiAIService? aiService}) {
+    // Initialize AI service if API key is available
+    if (AppConfig.geminiApiKey != null) {
+      _aiService = aiService ?? GeminiAIService(AppConfig.geminiApiKey!);
+    }
     _initializeDio();
   }
-
   void _initializeDio() {
     try {
       _dio = Dio(
@@ -65,10 +72,7 @@ class ScraperApiService {
     try {
       final response = await _dio.post(
         '/api/search',
-        data: {
-          'query': query,
-          if (userId != null) 'user_id': userId,
-        },
+        data: {'query': query, if (userId != null) 'user_id': userId},
       );
 
       final results = response.data['results'] as List;
@@ -88,10 +92,7 @@ class ScraperApiService {
     try {
       final response = await _dio.post(
         '/api/refresh-wishlist',
-        data: {
-          'user_id': userId,
-          'game_ids': gameIds,
-        },
+        data: {'user_id': userId, 'game_ids': gameIds},
         options: Options(
           receiveTimeout: Duration(seconds: ScraperConfig.refreshTimeout),
         ),
@@ -140,18 +141,67 @@ class ScraperApiService {
     required String gameId,
     required String userId,
   }) async {
+    // Si tenemos IA local, usarla directamente
+    if (_aiService != null) {
+      try {
+        // Obtener datos del juego desde Supabase
+        final gameData = await _getGameData(gameId);
+
+        return await _aiService!.analyzePurchaseDecision(
+              gameTitle: gameData['title'],
+              steamPrice: gameData['steam_price'],
+              epicPrice: gameData['epic_price'],
+              userId: userId,
+            ) ??
+            _getFallbackAnalysis();
+      } catch (e) {
+        print('Error usando IA local, intentando API externa: $e');
+        // Fallback: llamar a API externa si es necesario
+        return await _callExternalApi(gameId, userId);
+      }
+    }
+
+    // Fallback: llamar a API externa si no hay IA local
+    return await _callExternalApi(gameId, userId);
+  }
+
+  Future<Map<String, dynamic>> _getGameData(String gameId) async {
+    try {
+      final response = await _dio.get('/api/game/$gameId');
+      return response.data;
+    } catch (e) {
+      // Si no hay endpoint, devolver datos básicos
+      return {'title': 'Unknown Game', 'steam_price': null, 'epic_price': null};
+    }
+  }
+
+  Future<Map<String, dynamic>> _callExternalApi(
+    String gameId,
+    String userId,
+  ) async {
     try {
       final response = await _dio.post(
         '/api/analyze-purchase',
-        data: {
-          'game_id': gameId,
-          'user_id': userId,
-        },
+        data: {'game_id': gameId, 'user_id': userId},
       );
 
       return response.data;
     } catch (e) {
       throw Exception('Error analyzing purchase decision: $e');
     }
+  }
+
+  Map<String, dynamic> _getFallbackAnalysis() {
+    return {
+      'analysis': {
+        'recommendation': 'CONSIDER',
+        'confidence': 50,
+        'summary': 'Análisis no disponible. Verifica precios manualmente.',
+        'key_factors': [
+          'Precio no determinado',
+          'Compara con ofertas similares',
+        ],
+      },
+    };
   }
 }

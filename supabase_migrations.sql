@@ -56,15 +56,9 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Crear tabla de insights de IA (SOLO SI NO EXISTE)
-CREATE TABLE IF NOT EXISTS ai_insights (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    insight_type TEXT NOT NULL,
-    content JSONB NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    expires_at TIMESTAMP WITH TIME ZONE DEFAULT (NOW() + INTERVAL '7 days')
-);
+-- Tabla de insights de IA removida - funcionalidad migrada a Flutter
+-- Los insights de IA ahora se generan localmente en la aplicación Flutter
+-- Esta tabla ya no es necesaria y puede ser eliminada en futuras versiones
 
 -- Crear índices para optimización (SOLO SI NO EXISTEN)
 CREATE INDEX IF NOT EXISTS idx_games_normalized_title ON games(normalized_title);
@@ -75,7 +69,7 @@ CREATE INDEX IF NOT EXISTS idx_price_history_scraped_at ON price_history(game_id
 CREATE INDEX IF NOT EXISTS idx_user_searches_user_id ON user_searches(user_id);
 CREATE INDEX IF NOT EXISTS idx_wishlist_user_id ON wishlist(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id, is_read);
-CREATE INDEX IF NOT EXISTS idx_ai_insights_user_id ON ai_insights(user_id, expires_at);
+-- Índice de ai_insights removido - tabla ya no existe
 
 -- Función para obtener mejor precio actual
 DROP FUNCTION IF EXISTS get_current_best_price(UUID);
@@ -97,7 +91,7 @@ ALTER TABLE price_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_searches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ai_insights ENABLE ROW LEVEL SECURITY;
+-- RLS para ai_insights removido - tabla ya no existe
 
 -- Políticas para games (lectura pública, escritura solo scraper)
 DROP POLICY IF EXISTS "Games are viewable by everyone" ON games;
@@ -143,9 +137,4 @@ CREATE POLICY "Users can insert their own notifications" ON notifications FOR IN
 DROP POLICY IF EXISTS "Users can update their own notifications" ON notifications;
 CREATE POLICY "Users can update their own notifications" ON notifications FOR UPDATE USING (auth.uid() = user_id);
 
--- Políticas para ai_insights
-DROP POLICY IF EXISTS "Users can view their own AI insights" ON ai_insights;
-CREATE POLICY "Users can view their own AI insights" ON ai_insights FOR SELECT USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Users can insert their own AI insights" ON ai_insights;
-CREATE POLICY "Users can insert their own AI insights" ON ai_insights FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Políticas para ai_insights removidas - tabla ya no existe

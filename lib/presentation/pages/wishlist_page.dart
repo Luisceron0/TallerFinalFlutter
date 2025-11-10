@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/game_controller.dart';
-import '../../domain/entities/game_entity.dart';
+
 import '../../data/models/game_model.dart';
 
 class WishlistPage extends StatefulWidget {
@@ -83,7 +83,9 @@ class _WishlistPageState extends State<WishlistPage> {
       final user = _client.auth.currentUser;
       if (user == null) return;
 
-      final gameIds = _wishlistItems.map((item) => item['game_id'] as String).toList();
+      final gameIds = _wishlistItems
+          .map((item) => item['game_id'] as String)
+          .toList();
 
       if (gameIds.isEmpty) {
         setState(() => _isRefreshing = false);
@@ -112,10 +114,7 @@ class _WishlistPageState extends State<WishlistPage> {
       final user = _client.auth.currentUser;
       if (user == null) return;
 
-      await _gameController.removeFromWishlist(
-        userId: user.id,
-        gameId: gameId,
-      );
+      await _gameController.removeFromWishlist(userId: user.id, gameId: gameId);
 
       // Remove from local list
       setState(() {
@@ -134,10 +133,7 @@ class _WishlistPageState extends State<WishlistPage> {
     if (priceHistory.isEmpty) {
       return const Text(
         'Precio no disponible',
-        style: TextStyle(
-          fontSize: 14,
-          color: AppColors.secondaryText,
-        ),
+        style: TextStyle(fontSize: 14, color: AppColors.secondaryText),
       );
     }
 
@@ -171,7 +167,10 @@ class _WishlistPageState extends State<WishlistPage> {
               if (steamPrice['discount_percent'] > 0) ...[
                 const SizedBox(width: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
@@ -206,7 +205,10 @@ class _WishlistPageState extends State<WishlistPage> {
               if (epicPrice['discount_percent'] > 0) ...[
                 const SizedBox(width: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
@@ -284,7 +286,9 @@ class _WishlistPageState extends State<WishlistPage> {
                         // Refresh button
                         IconButton(
                           icon: Icon(
-                            _isRefreshing ? Icons.refresh : Icons.refresh_outlined,
+                            _isRefreshing
+                                ? Icons.refresh
+                                : Icons.refresh_outlined,
                             color: Colors.white,
                             size: 24,
                           ),
@@ -304,139 +308,155 @@ class _WishlistPageState extends State<WishlistPage> {
                 child: _isLoading
                     ? const Center(
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryPurple),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primaryPurple,
+                          ),
                         ),
                       )
                     : _wishlistItems.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.favorite_border,
-                                  size: 64,
-                                  color: AppColors.secondaryText,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Tu wishlist está vacía',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    color: AppColors.secondaryText,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Agrega juegos desde la búsqueda',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: AppColors.tertiaryText,
-                                  ),
-                                ),
-                              ],
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.favorite_border,
+                              size: 64,
+                              color: AppColors.secondaryText,
                             ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _loadWishlist,
-                            color: AppColors.primaryPurple,
-                            child: ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _wishlistItems.length,
-                              itemBuilder: (context, index) {
-                                final item = _wishlistItems[index];
-                                final game = item['games'] as Map<String, dynamic>?;
+                            const SizedBox(height: 16),
+                            Text(
+                              'Tu wishlist está vacía',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                color: AppColors.secondaryText,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Agrega juegos desde la búsqueda',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.tertiaryText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : RefreshIndicator(
+                        onRefresh: _loadWishlist,
+                        color: AppColors.primaryPurple,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _wishlistItems.length,
+                          itemBuilder: (context, index) {
+                            final item = _wishlistItems[index];
+                            final game = item['games'] as Map<String, dynamic>?;
 
-                                if (game == null) return const SizedBox.shrink();
+                            if (game == null) return const SizedBox.shrink();
 
-                                return Card(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: InkWell(
-                                    onTap: () {
-                                      // Navigate to game detail page
-                                      final gameEntity = GameModel.fromJson(game).toEntity();
-                                      Get.toNamed('/game-detail', arguments: gameEntity);
-                                    },
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Row(
-                                        children: [
-                                          // Game image
-                                          Container(
-                                            width: 60,
-                                            height: 60,
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(8),
-                                              image: game['image_url'] != null
-                                                  ? DecorationImage(
-                                                      image: NetworkImage(game['image_url']),
-                                                      fit: BoxFit.cover,
-                                                    )
-                                                  : null,
-                                              color: AppColors.surfaceColor,
-                                            ),
-                                            child: game['image_url'] == null
-                                                ? const Icon(
-                                                    Icons.gamepad,
-                                                    color: AppColors.primaryNeon,
-                                                    size: 30,
-                                                  )
-                                                : null,
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  // Navigate to game detail page
+                                  final gameEntity = GameModel.fromJson(
+                                    game,
+                                  ).toEntity();
+                                  Get.toNamed(
+                                    '/game-detail',
+                                    arguments: gameEntity,
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    children: [
+                                      // Game image
+                                      Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
                                           ),
-                                          const SizedBox(width: 12),
-
-                                          // Game info
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  game['title'] ?? 'Sin título',
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: AppColors.primaryText,
+                                          image: game['image_url'] != null
+                                              ? DecorationImage(
+                                                  image: NetworkImage(
+                                                    game['image_url'],
                                                   ),
-                                                  maxLines: 2,
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                                const SizedBox(height: 4),
-                                                _buildPriceInfo(game),
-                                                if (item['target_price'] != null) ...[
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    'Precio objetivo: €${item['target_price'].toStringAsFixed(2)}',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color: AppColors.secondaryText,
-                                                      fontStyle: FontStyle.italic,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ],
-                                            ),
-                                          ),
-
-                                          // Remove button
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.delete_outline,
-                                              color: Colors.red,
-                                            ),
-                                            onPressed: () => _removeFromWishlist(item['game_id']),
-                                          ),
-                                        ],
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : null,
+                                          color: AppColors.surfaceColor,
+                                        ),
+                                        child: game['image_url'] == null
+                                            ? const Icon(
+                                                Icons.gamepad,
+                                                color: AppColors.primaryNeon,
+                                                size: 30,
+                                              )
+                                            : null,
                                       ),
-                                    ),
+                                      const SizedBox(width: 12),
+
+                                      // Game info
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              game['title'] ?? 'Sin título',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primaryText,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            _buildPriceInfo(game),
+                                            if (item['target_price'] !=
+                                                null) ...[
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Precio objetivo: €${item['target_price'].toStringAsFixed(2)}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color:
+                                                      AppColors.secondaryText,
+                                                  fontStyle: FontStyle.italic,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+
+                                      // Remove button
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () => _removeFromWishlist(
+                                          item['game_id'],
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              },
-                            ),
-                          ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
               ),
             ),
           ],

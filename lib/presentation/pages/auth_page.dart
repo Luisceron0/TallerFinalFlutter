@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/constants/app_colors.dart';
@@ -186,9 +184,7 @@ class _AuthPageState extends State<AuthPage> {
                             _isLogin
                                 ? '¿No tienes cuenta? Regístrate'
                                 : '¿Ya tienes cuenta? Inicia sesión',
-                            style: TextStyle(
-                              color: AppColors.primaryNeon,
-                            ),
+                            style: TextStyle(color: AppColors.primaryNeon),
                           ),
                         ),
                       ],

@@ -77,9 +77,8 @@ class AddToWishlistRequest(BaseModel):
     game_id: str
     target_price: Optional[float] = None
 
-class AnalyzePurchaseRequest(BaseModel):
-    game_id: str
-    user_id: str
+# Removed AnalyzePurchaseRequest - IA functionality moved to Flutter
+# Removed AI-related imports and endpoints - all AI processing now happens in Flutter
 
 async def search_steam_games(query: str) -> List[Dict[str, Any]]:
     """Search Steam games using Playwright scraper"""
@@ -185,18 +184,8 @@ async def search_games(request: SearchRequest, background_tasks: BackgroundTasks
             game = game_data['game']
             prices = game_data['prices']
 
-            # Generate AI insight if user provided and API key available
+            # AI insight generation removed - now handled in Flutter app
             ai_insight = None
-            if request.user_id and settings.gemini_api_key:
-                try:
-                    ai_insight = await gemini_service.generate_quick_tip(
-                        game_title=game['title'],
-                        steam_price=prices.get('steam', {}).get('price'),
-                        epic_price=prices.get('epic', {}).get('price'),
-                        user_id=request.user_id
-                    )
-                except Exception as e:
-                    logger.warning(f"AI insight generation failed: {e}")
 
             results.append(GameResult(
                 id=game['id'],
@@ -223,7 +212,7 @@ async def search_games(request: SearchRequest, background_tasks: BackgroundTasks
         return SearchResponse(
             results=results,
             search_time=search_time,
-            ai_enabled=bool(settings.gemini_api_key)
+            ai_enabled=False  # AI now handled in Flutter app
         )
 
     except Exception as e:
@@ -300,19 +289,8 @@ async def refresh_wishlist(request: RefreshWishlistRequest, background_tasks: Ba
                 )
                 notifications_count += notifications_created
 
-                # Generate AI insights if enabled
-                if settings.gemini_api_key:
-                    insight = await gemini_service.analyze_price_change(
-                        game_title=game['title'],
-                        old_price=None,  # Would need to fetch from history
-                        new_price=steam_price or epic_price,
-                        user_id=request.user_id
-                    )
-                    if insight:
-                        await supabase_service.save_ai_insight(
-                            request.user_id, 'price_change', {'insight': insight}
-                        )
-                        ai_insights_count += 1
+                # AI insights generation moved to Flutter app, but can be saved to Supabase for sync
+                # ai_insights_count remains 0 as AI processing moved to client-side
 
                 refreshed_count += 1
 
@@ -371,102 +349,9 @@ async def add_to_wishlist(request: AddToWishlistRequest):
         logger.error(f"Failed to add game to wishlist: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to add to wishlist: {str(e)}")
 
-@app.post("/api/analyze-purchase")
-async def analyze_purchase_decision(request: AnalyzePurchaseRequest):
-    """
-    Comprehensive AI-powered purchase decision analysis
-    Returns detailed analysis with recommendation, confidence, and key factors
-    """
-    try:
-        logger.info(f"Analyzing purchase decision for game {request.game_id} by user {request.user_id}")
-
-        # Get game details from database
-        game = await supabase_service.get_game_by_id(request.game_id)
-        if not game:
-            raise HTTPException(status_code=404, detail="Game not found")
-
-        # Get current prices
-        steam_price = None
-        epic_price = None
-
-        # Get Steam price
-        if game.get('steam_app_id'):
-            try:
-                steam_url = f"https://store.steampowered.com/api/appdetails?appids={game['steam_app_id']}"
-                response = requests.get(steam_url, timeout=10)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get(str(game['steam_app_id']), {}).get('success'):
-                        price_info = data[str(game['steam_app_id'])].get('data', {}).get('price_overview', {})
-                        steam_price = price_info.get('final', 0) / 100 if price_info else None
-            except Exception as e:
-                logger.warning(f"Failed to get Steam price for {game['steam_app_id']}: {e}")
-
-        # Get Epic price
-        if game.get('epic_slug'):
-            try:
-                from scrapers.epic_scraper import EpicScraper
-                async with EpicScraper() as scraper:
-                    epic_games = await scraper.search_games(game['title'])
-                    if epic_games:
-                        epic_price = epic_games[0].get('price')
-            except Exception as e:
-                logger.warning(f"Failed to get Epic price for {game['epic_slug']}: {e}")
-
-        # Get price history for analysis
-        price_history = await supabase_service.get_price_history(request.game_id, limit=10)
-
-        # Generate comprehensive AI analysis
-        if settings.gemini_api_key:
-            analysis = await gemini_service.analyze_purchase_decision(
-                game_title=game['title'],
-                steam_price=steam_price,
-                epic_price=epic_price,
-                user_id=request.user_id,
-                price_history=price_history
-            )
-
-            if analysis:
-                return {
-                    "game_id": request.game_id,
-                    "game_title": game['title'],
-                    "analysis": analysis,
-                    "generated_at": datetime.utcnow().isoformat()
-                }
-
-        # Fallback response if AI is not available
-        return {
-            "game_id": request.game_id,
-            "game_title": game['title'],
-            "analysis": {
-                "recommendation": "BUY_NOW",
-                "confidence_score": 50,
-                "summary": "AI analysis not available. Based on current prices, this appears to be a reasonable purchase.",
-                "price_analysis": {
-                    "best_store": "Steam" if steam_price and (not epic_price or steam_price <= epic_price) else "Epic",
-                    "current_deal_quality": "Fair",
-                    "price_trend": "Price trend analysis not available",
-                    "savings_potential": "Unable to determine savings potential"
-                },
-                "user_fit_analysis": {
-                    "genre_match": "Unknown",
-                    "budget_alignment": "Unknown",
-                    "timing_recommendation": "Buy now if interested"
-                },
-                "key_factors": [
-                    "Current prices appear reasonable",
-                    "AI analysis temporarily unavailable"
-                ],
-                "alternative_suggestions": []
-            },
-            "generated_at": datetime.utcnow().isoformat()
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to analyze purchase decision: {e}")
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+# Endpoint de IA removido - ahora la IA corre en Flutter
+# La funcionalidad de IA se ha migrado completamente a la aplicación Flutter
+# Este endpoint ya no es necesario y puede ser removido en futuras versiones
 
 @app.on_event("startup")
 async def startup_event():

@@ -221,7 +221,7 @@ class SupabaseService:
         }).execute()
 
     async def save_ai_insight(self, user_id: str, insight_type: str, content: Dict[str, Any]):
-        """Save AI insight to cache"""
+        """Save AI insight to Supabase for persistence and cross-device sync"""
         from datetime import datetime, timedelta
 
         expires_at = datetime.utcnow() + timedelta(days=7)
