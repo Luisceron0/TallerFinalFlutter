@@ -13,6 +13,7 @@
 
 ## Steps Completed
 - [x] Create railway.toml configuration in scraper_api/ directory
+- [x] Create start.sh script for Railway deployment
 - [x] Remove old railway.json and nixpacks.toml from scraper_api/
 - [x] Create .env.example template
 - [x] Create README.md with deployment instructions
@@ -38,6 +39,7 @@
 
 ## Railway Configuration
 - railway.toml in scraper_api/ directory with Nixpacks builder
+- start.sh script handles Playwright installation and app startup
 - Playwright chromium installation with dependencies
 - Health check at /health endpoint
-- Proper start command: python main.py (relative to scraper_api/)
+- Proper start command: ./start.sh

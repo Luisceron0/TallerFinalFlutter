@@ -2,7 +2,7 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "python main.py"
+startCommand = "./start.sh"
 healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
@@ -14,14 +14,14 @@ nixPkgs = ["...", "playwright-driver", "chromium"]
 
 [build.nixpacks.phases.install]
 cmds = [
-  "pip install --no-cache-dir -r requirements.txt",
-  "playwright install chromium --with-deps"
+  "pip install --no-cache-dir -r requirements.txt"
 ]
 
 [build.nixpacks.phases.build]
 cmds = [
-  "echo 'Build completed'"
+  "playwright install chromium --with-deps",
+  "chmod +x start.sh"
 ]
 
 [build.nixpacks.start]
-cmd = "python main.py"
+cmd = "./start.sh"
