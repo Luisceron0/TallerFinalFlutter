@@ -15,7 +15,7 @@ serve(async (req) => {
     const { message, prompt } = await req.json()
 
     // Call Gemini AI for chat response
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${Deno.env.get('GEMINI_API_KEY')}`, {
+    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${Deno.env.get('GEMINI_API_KEY')}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

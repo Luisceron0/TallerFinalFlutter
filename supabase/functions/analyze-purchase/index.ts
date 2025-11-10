@@ -47,7 +47,7 @@ serve(async (req) => {
     const epicPrice = game.price_history?.find((p: any) => p.store === 'epic')?.price
 
     // Call Gemini AI for analysis
-    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${Deno.env.get('GEMINI_API_KEY')}`, {
+    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${Deno.env.get('GEMINI_API_KEY')}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
