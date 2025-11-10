@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: gameprice-scraper
+    runtime: python3
+    plan: free
+    buildCommand: |
+      apt-get update && apt-get install -y wget gnupg ca-certificates procps curl &&
+      wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &&
+      sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' &&
+      apt-get update &&
+      apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 &&
+      rm -rf /var/lib/apt/lists/* &&
+      pip install --no-cache-dir -r requirements.txt &&
+      playwright install chromium
+    startCommand: python main.py
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DEBUG_MODE
+        value: false
+      - key: PYTHON_VERSION
+        value: 3.11.9

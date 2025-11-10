@@ -1,42 +1,28 @@
 
-# Railway Docker Deployment - RAILWAY.TOML MOVED TO SCRAPER_API
+# Render Deployment - FINAL CONFIGURATION
 
 ## Issues Identified
-- Railway deployment failed with Flutter detection instead of Python
 - Playwright browser executable not found in Render
 - Gemini model 'gemini-1.5-flash' not found (404 error)
-- Build context was wrong (looking for files in root instead of scraper_api/)
-- Dockerfile COPY order was wrong (requirements.txt not found)
-- apt-key command deprecated (replaced with gpg --dearmor)
-- fonts-kacst package not available in Debian trixie
+- Railway deployment failed with Flutter detection instead of Python
+- Fly.io deployment had issues with Docker configuration
 
-## Railway Docker Fix Plan
-1. Use Dockerfile instead of Nixpacks
-2. Set buildContext to "./scraper_api" with explicit relative path
-3. Fix Dockerfile to COPY all files first, then install dependencies
-4. Fix Chrome GPG key installation (use gpg --dearmor instead of apt-key)
-5. Remove unavailable fonts-kacst package
-6. Railway will build from scraper_api/Dockerfile
-7. Update Flutter app to Railway URL
-8. Fix Gemini model name
-9. Update google-generativeai version
+## Render Fix Plan
+1. Use render.yaml configuration (already working)
+2. Keep Docker-based build with Playwright installation
+3. Update Flutter app to Render URL
+4. Fix Gemini model name
+5. Update google-generativeai version
 
 ## Steps Completed
-- [x] Change railway.toml to use DOCKERFILE builder
-- [x] Point to ./scraper_api/Dockerfile with explicit path
-- [x] Add buildContext = "./scraper_api" to fix file paths
-- [x] Fix Dockerfile: COPY all files first, then install requirements
-- [x] Fix Chrome GPG key: use gpg --dearmor instead of deprecated apt-key
-- [x] Remove fonts-kacst (not available in Debian trixie)
-- [x] Keep health check configuration
-- [x] Update Flutter scraper_config.dart to Railway URL
+- [x] Create render.yaml in root directory
+- [x] Keep existing Docker build configuration with Playwright
+- [x] Update Flutter scraper_config.dart to Render URL (gameprice-scraper.onrender.com)
 - [x] Update gemini_service.py to use 'gemini-1.5-pro'
-- [x] Update requirements.txt to latest google-generativeai (0.9.0)
-- [x] Verify requirements.txt exists and is accessible
-- [x] Move railway.toml to scraper_api/ directory (Railway looks for it there)
-- [x] Simplify railway.toml to just builder = "DOCKERFILE" (auto-detects Dockerfile)
+- [x] Update requirements.txt to compatible google-generativeai (0.8.3)
+- [x] Remove Railway and Fly configuration files
 
 ## Next Steps
-- [ ] Deploy to Railway (will use Docker build with correct context and Dockerfile)
+- [ ] Deploy to Render (will use render.yaml configuration)
 - [ ] Test API endpoints after deployment
 - [ ] Verify Playwright and Gemini work correctly
