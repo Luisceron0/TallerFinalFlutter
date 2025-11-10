@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'presentation/pages/auth_gate.dart';
+import 'presentation/pages/game_search_page.dart';
+import 'presentation/pages/game_detail_page.dart';
+import 'presentation/pages/notifications_page.dart';
+import 'presentation/pages/wishlist_page.dart';
+import 'presentation/pages/add_task_page.dart';
+import 'presentation/pages/home_page.dart';
 import 'core/constants/app_colors.dart';
 import 'core/config/supabase_config.dart';
 import 'presentation/controllers/auth_controller.dart';
@@ -76,6 +82,14 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const AuthGate(),
+      getPages: [
+        GetPage(name: '/GameSearchPage', page: () => const GameSearchPage()),
+        GetPage(name: '/GameDetailPage', page: () => GameDetailPage(game: Get.arguments as dynamic)),
+        GetPage(name: '/NotificationsPage', page: () => const NotificationsPage()),
+        GetPage(name: '/WishlistPage', page: () => const WishlistPage()),
+        GetPage(name: '/AddTaskPage', page: () => const AddTaskPage()),
+        GetPage(name: '/HomePage', page: () => const HomePage()),
+      ],
       debugShowCheckedModeBanner: false,
     );
   }
