@@ -113,6 +113,40 @@ class _GameDetailPageState extends State<GameDetailPage> {
       });
     }
 
+    // If no paid prices, show free message
+    if (availablePrices.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.green.withOpacity(0.3),
+          ),
+        ),
+        child: const Column(
+          children: [
+            Icon(
+              Icons.card_giftcard,
+              color: Colors.green,
+              size: 32,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Juego gratuito',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.green,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       children: [
         // Price cards
@@ -121,6 +155,37 @@ class _GameDetailPageState extends State<GameDetailPage> {
           margin: const EdgeInsets.only(bottom: 8),
           child: _buildPriceCard(priceData),
         )),
+
+        // Show availability message if only one store
+        if (availablePrices.length == 1) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.secondaryText.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: AppColors.secondaryText,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Disponible solo en ${availablePrices[0]['store']}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.secondaryText,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
