@@ -1,7 +1,7 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "scraper_api/Dockerfile"
-buildContext = "scraper_api"
+dockerfilePath = "./scraper_api/Dockerfile"
+buildContext = "./scraper_api"
 
 [deploy]
 healthcheckPath = "/health"
