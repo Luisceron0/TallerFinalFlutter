@@ -3,7 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ScraperConfig {
   static String get scraperApiUrl {
     // Use Render production URL
-    return 'https://gameprice-scraper.onrender.com';
+    return 'https://tallerfinalflutter.onrender.com';
   }
 
   static String get geminiApiKey {
