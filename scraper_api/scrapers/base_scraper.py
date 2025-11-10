@@ -20,15 +20,12 @@ class PlaywrightBaseScraper(ABC):
         self.headless = headless
         self.browser: Optional[Browser] = None
         self.context: Optional[BrowserContext] = None
-        self.use_playwright = True  # Flag to switch to requests fallback
+        self.use_playwright = False  # Always use requests fallback for Render
 
     async def __aenter__(self):
         """Async context manager entry"""
-        try:
-            await self._init_browser()
-        except Exception as e:
-            logger.warning(f"Playwright initialization failed: {e}. Switching to requests fallback.")
-            self.use_playwright = False
+        # Always use requests fallback for Render deployment
+        logger.info("Using requests fallback for Render deployment (no Playwright)")
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -144,7 +141,7 @@ class PlaywrightBaseScraper(ABC):
         if self.use_playwright:
             try:
                 return await self._get_game_details_playwright(game_id)
-            except Exception as e:
+            except Exception:
                 logger.warning(f"Playwright details failed: {e}. Using requests fallback.")
                 self.use_playwright = False
                 return self.requests_fallback_details(game_id)

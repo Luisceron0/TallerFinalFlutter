@@ -75,11 +75,8 @@ class AddToWishlistRequest(BaseModel):
     game_id: str
     target_price: Optional[float] = None
 
-# Removed AnalyzePurchaseRequest - IA functionality moved to Flutter
-# Removed AI-related imports and endpoints - all AI processing now happens in Flutter
-
 async def search_steam_games(query: str) -> List[Dict[str, Any]]:
-    """Search Steam games using Playwright scraper"""
+    """Search Steam games using Playwright scraper with requests fallback"""
     try:
         from scrapers.steam_scraper import SteamScraper
 
@@ -89,10 +86,17 @@ async def search_steam_games(query: str) -> List[Dict[str, Any]]:
         return games
     except Exception as e:
         logger.error(f"Steam search failed: {e}")
-        return []
+        # Use requests fallback
+        try:
+            scraper = SteamScraper()
+            scraper.use_playwright = False  # Force requests fallback
+            return scraper.requests_fallback_search(query)
+        except Exception as fallback_e:
+            logger.error(f"Steam fallback search also failed: {fallback_e}")
+            return []
 
 async def search_epic_games(query: str) -> List[Dict[str, Any]]:
-    """Search Epic Games using Playwright scraper"""
+    """Search Epic Games using Playwright scraper with requests fallback"""
     try:
         from scrapers.epic_scraper import EpicScraper
 
@@ -102,7 +106,14 @@ async def search_epic_games(query: str) -> List[Dict[str, Any]]:
         return games
     except Exception as e:
         logger.error(f"Epic search failed: {e}")
-        return []
+        # Use requests fallback
+        try:
+            scraper = EpicScraper()
+            scraper.use_playwright = False  # Force requests fallback
+            return scraper.requests_fallback_search(query)
+        except Exception as fallback_e:
+            logger.error(f"Epic fallback search also failed: {fallback_e}")
+            return []
 
 @app.get("/health")
 async def health_check():
