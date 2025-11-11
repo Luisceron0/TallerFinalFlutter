@@ -61,6 +61,29 @@ class GeminiAIService {
         return response.data as Map<String, dynamic>;
       }
 
+      print('Supabase analyze-purchase returned status: ${response.status}');
+
+      // Fallback: try the scraper API analyze endpoint
+      try {
+        final dio = Dio();
+        final resp = await dio.post(
+          ScraperConfig.analyzePurchaseEndpoint,
+          data: {
+            'game_title': gameTitle,
+            'steam_price': steamPrice,
+            'epic_price': epicPrice,
+            'user_id': userId,
+          },
+          options: Options(headers: {'Content-Type': 'application/json'}),
+        );
+
+        if (resp.statusCode == 200 && resp.data != null) {
+          return Map<String, dynamic>.from(resp.data as Map);
+        }
+      } catch (fallbackErr) {
+        print('Fallback analyze endpoint failed: $fallbackErr');
+      }
+
       return null;
     } catch (e) {
       print('Error analizando decisión: $e');

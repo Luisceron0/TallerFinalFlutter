@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart';
 import '../../core/constants/app_colors.dart';
 import '../controllers/game_controller.dart';
-import '../controllers/auth_controller.dart';
+// auth_controller import not required in this page
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/gemini_ai_service.dart';
 import '../../data/services/scraper_api_service.dart';
+import '../../core/config/scraper_config.dart';
+import 'dart:convert';
 
 class GameDetailPage extends StatefulWidget {
   final dynamic game;
@@ -19,7 +22,7 @@ class GameDetailPage extends StatefulWidget {
 
 class _GameDetailPageState extends State<GameDetailPage> {
   final GameController _gameController = Get.find<GameController>();
-  final AuthController _authController = Get.find<AuthController>();
+  // AuthController removed (not used here) to avoid unused-field warnings
   final SupabaseClient _client = Supabase.instance.client;
 
   bool _isInWishlist = false;
@@ -42,9 +45,30 @@ class _GameDetailPageState extends State<GameDetailPage> {
       // Always fetch fresh game data with prices from repository
       final gameData = await _gameController.getGameDetails(widget.game.id);
       if (gameData != null && mounted) {
-        setState(() {
-          _gameData = gameData;
-        });
+        // If repository returned a game but it has no prices, try scraper as fallback
+        final hasPrices =
+            (gameData.prices != null && (gameData.prices as Map).isNotEmpty);
+        if (!hasPrices) {
+          print(
+            'GameDetailPage: repository returned game without prices, trying scraper fallback for ${widget.game.title}',
+          );
+          await _fetchPricesFromScraper();
+
+          // If scraper found a richer result it sets _gameData; otherwise keep repository result
+          if (_gameData == null) {
+            setState(() {
+              _gameData = gameData;
+            });
+            // Try to fetch Steam price as last resort
+            await _fetchSteamPriceAndUpdate();
+          }
+        } else {
+          setState(() {
+            _gameData = gameData;
+          });
+          // Enrich with Steam API if needed
+          await _fetchSteamPriceAndUpdate();
+        }
       } else {
         // If no data from repository, try to fetch from scraper API directly
         await _fetchPricesFromScraper();
@@ -76,14 +100,96 @@ class _GameDetailPageState extends State<GameDetailPage> {
           orElse: () => searchResults.first,
         );
 
-        if (matchingGame.prices != null && matchingGame.prices!.isNotEmpty) {
-          setState(() {
-            _gameData = matchingGame;
-          });
-        }
+        // Always set matching game, we'll try to enrich if prices are missing
+        setState(() {
+          _gameData = matchingGame;
+        });
+        // Try to enrich with Steam API price if available
+        await _fetchSteamPriceAndUpdate();
       }
     } catch (e) {
       print('Error fetching prices from scraper: $e');
+    }
+  }
+
+  /// Try to fetch Steam price using Steam store API if we have steamAppId
+  Future<void> _fetchSteamPriceAndUpdate() async {
+    try {
+      final steamId = (_gameData?.steamAppId ?? widget.game.steamAppId)
+          ?.toString();
+      if (steamId == null || steamId.isEmpty) return;
+
+      final dio = Dio();
+      final resp = await dio.get(
+        'https://store.steampowered.com/api/appdetails',
+        queryParameters: {'appids': steamId, 'cc': 'es', 'l': 'es'},
+      );
+
+      if (resp.statusCode == 200 && resp.data != null) {
+        final map = resp.data as Map<String, dynamic>;
+        final appData = map[steamId];
+        if (appData != null && appData['success'] == true) {
+          final details = appData['data'] as Map<String, dynamic>?;
+          if (details != null) {
+            // price_overview may be null for free games
+            final priceOverview =
+                details['price_overview'] as Map<String, dynamic>?;
+            double? price;
+            int discount = 0;
+            bool isFree = false;
+
+            if (priceOverview != null) {
+              final finalPrice = priceOverview['final'];
+              if (finalPrice is num) {
+                price = finalPrice.toDouble() / 100.0;
+              } else if (finalPrice is String) {
+                price = double.tryParse(finalPrice) ?? null;
+              }
+              discount = priceOverview['discount_percent'] is int
+                  ? priceOverview['discount_percent'] as int
+                  : (int.tryParse('${priceOverview['discount_percent']}') ?? 0);
+            } else {
+              // check if game is free
+              final is_free = details['is_free'] as bool? ?? false;
+              isFree = is_free;
+            }
+
+            // Merge into existing prices map
+            Map<String, dynamic> existingPrices = {};
+            try {
+              final src =
+                  (_gameData?.prices ?? widget.game.prices)
+                      as Map<String, dynamic>?;
+              if (src != null) existingPrices.addAll(src);
+            } catch (_) {}
+
+            existingPrices['steam'] = {
+              'price': price,
+              'discount_percent': discount,
+              'is_free': isFree,
+              'url': 'https://store.steampowered.com/app/$steamId',
+            };
+
+            // Update _gameData using copyWith if available
+            try {
+              final base = (_gameData ?? widget.game) as dynamic;
+              final updated = base.copyWith(prices: existingPrices);
+              setState(() {
+                _gameData = updated;
+              });
+            } catch (e) {
+              // Fallback: if copyWith not available, try wrapping minimal data
+              setState(() {
+                _gameData =
+                    {...(_gameData ?? widget.game), 'prices': existingPrices}
+                        as dynamic;
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching Steam price: $e');
     }
   }
 
@@ -91,7 +197,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
     try {
       final user = _client.auth.currentUser;
       if (user != null) {
-        final response = await _client
+        await _client
             .from('wishlist')
             .select()
             .eq('user_id', user.id)
@@ -109,9 +215,48 @@ class _GameDetailPageState extends State<GameDetailPage> {
   Widget _buildPriceComparison() {
     // Use fresh game data if available, otherwise fallback to widget.game
     final game = _gameData ?? widget.game;
-    final prices = game.prices ?? {};
+    // Normalize incoming prices structure: accept Map, List, nested lists, and different casing
+    dynamic rawPrices = game.prices;
+
+    Map<String, dynamic> prices = {};
+
+    try {
+      if (rawPrices == null) {
+        prices = {};
+      } else if (rawPrices is Map<String, dynamic>) {
+        // Normalize keys to lowercase for matching
+        rawPrices.forEach((k, v) {
+          final key = k.toString().toLowerCase();
+          if (v is List && v.isNotEmpty) {
+            // take last entry
+            prices[key] = v.last is Map ? v.last : {'price': v.last};
+          } else if (v is Map) {
+            prices[key] = v;
+          } else {
+            // primitive value (e.g., price directly)
+            prices[key] = {'price': v};
+          }
+        });
+      } else if (rawPrices is List) {
+        for (final entry in rawPrices) {
+          if (entry is Map && entry['store'] != null) {
+            final key = entry['store'].toString().toLowerCase();
+            prices[key] = entry;
+          }
+        }
+      } else {
+        // Unknown format
+        prices = {};
+      }
+    } catch (e) {
+      print('Error normalizing prices for ${game.id ?? game.title}: $e');
+      prices = {};
+    }
 
     if (prices.isEmpty) {
+      print(
+        'GameDetailPage: precios no disponibles para juego="${game.title}" id=${game.id} rawPrices=${game.prices}',
+      );
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -138,31 +283,39 @@ class _GameDetailPageState extends State<GameDetailPage> {
       );
     }
 
-    // Extract prices
-    final steamPrice = prices['steam'];
-    final epicPrice = prices['epic'];
+    // Extract prices (accept keys like 'steam', 'steam_store', 'epic')
+    dynamic steamPrice;
+    dynamic epicPrice;
+    // find best matching keys
+    for (final k in prices.keys) {
+      if (k.contains('steam')) steamPrice = prices[k];
+      if (k.contains('epic')) epicPrice = prices[k];
+    }
 
     // Collect all available prices
     List<Map<String, dynamic>> availablePrices = [];
 
     if (steamPrice != null &&
-        steamPrice['price'] != null &&
-        !steamPrice['is_free']) {
+        steamPrice is Map &&
+        (steamPrice['price'] != null || steamPrice['price'] != null) &&
+        !(steamPrice['is_free'] == true)) {
       availablePrices.add({
         'store': 'Steam',
         'price': steamPrice['price'],
-        'url': steamPrice['url'],
+        'url':
+            steamPrice['url'] ?? steamPrice['link'] ?? steamPrice['url_link'],
         'discount_percent': steamPrice['discount_percent'] ?? 0,
       });
     }
 
     if (epicPrice != null &&
-        epicPrice['price'] != null &&
-        !epicPrice['is_free']) {
+        epicPrice is Map &&
+        (epicPrice['price'] != null || epicPrice['price'] != null) &&
+        !(epicPrice['is_free'] == true)) {
       availablePrices.add({
         'store': 'Epic',
         'price': epicPrice['price'],
-        'url': epicPrice['url'],
+        'url': epicPrice['url'] ?? epicPrice['link'] ?? epicPrice['url_link'],
         'discount_percent': epicPrice['discount_percent'] ?? 0,
       });
     }
@@ -289,13 +442,32 @@ class _GameDetailPageState extends State<GameDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '\$${price.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryPurple,
-                  ),
+                Builder(
+                  builder: (context) {
+                    // Safely format price if numeric, otherwise show 'N/D'
+                    String priceText;
+                    if (price is num) {
+                      priceText = '\$${price.toDouble().toStringAsFixed(2)}';
+                    } else if (price is String) {
+                      final parsed = double.tryParse(
+                        price.replaceAll(',', '.'),
+                      );
+                      priceText = parsed != null
+                          ? '\$${parsed.toStringAsFixed(2)}'
+                          : 'N/D';
+                    } else {
+                      priceText = 'N/D';
+                    }
+
+                    return Text(
+                      priceText,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryPurple,
+                      ),
+                    );
+                  },
                 ),
                 if (discountPercent > 0) ...[
                   const SizedBox(height: 2),
@@ -571,6 +743,65 @@ class _GameDetailPageState extends State<GameDetailPage> {
 
                             // Enhanced price comparison
                             _buildPriceComparison(),
+
+                            // Debug: show raw prices when in debug mode to help diagnose missing prices
+                            if (ScraperConfig.isDebugMode) ...[
+                              const SizedBox(height: 12),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.03),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.black12),
+                                ),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Text(
+                                    'RAW prices: ' +
+                                        (game.prices != null
+                                            ? const JsonEncoder.withIndent(
+                                                '  ',
+                                              ).convert(game.prices)
+                                            : 'null'),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.secondaryText,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                            if (ScraperConfig.isDebugMode) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'steamAppId: ',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.secondaryText,
+                                    ),
+                                  ),
+                                  Text(
+                                    game.steamAppId?.toString() ?? 'null',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text(
+                                    'epicSlug: ',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.secondaryText,
+                                    ),
+                                  ),
+                                  Text(
+                                    game.epicSlug?.toString() ?? 'null',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ],
 
                             const SizedBox(height: 16),
 
