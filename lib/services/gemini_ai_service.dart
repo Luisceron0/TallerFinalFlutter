@@ -44,6 +44,75 @@ class GeminiAIService {
     required String userId,
   }) async {
     try {
+      // If a Gemini API key is configured, prefer calling Gemini directly
+      final geminiKey = ScraperConfig.geminiApiKey;
+      if (geminiKey.isNotEmpty) {
+        try {
+          final dio = Dio();
+          // Build a Spanish prompt that asks Gemini to return JSON and prefer deterministic
+          // heuristics (thresholds). The assistant must reply ONLY with JSON (no extra text).
+          final prompt =
+              '''
+Eres un asistente experto que evalúa si el precio de Steam de un juego de PC es una buena oferta.
+RESPONDE ÚNICAMENTE con un objeto JSON (sin texto adicional). El objeto debe tener esta forma:
+{
+  "analysis": {
+    "recommendation": "BUY_NOW" | "WAIT_FOR_SALE" | "AVOID",
+    "summary": "resumen corto en español (1-2 frases)",
+    "key_factors": ["lista de 2-4 factores cortos considerados"]
+  }
+}
+
+Título del juego: "${gameTitle}"
+Precio en Steam (EUR): ${steamPrice ?? 'null'}
+
+IGNORA Epic y otras tiendas — solo evalúa Steam.
+Aplica las siguientes reglas como heurísticas deterministas (útiles como criterio de desempate):
+- Si el precio es numérico y <= 10 => RECOMENDACIÓN: BUY_NOW.
+- Si el precio es numérico y <= 20 con descuento significativo (o juego claramente indie) => BUY_NOW.
+- Si el precio es numérico y está entre 20 y 40 sin descuento => WAIT_FOR_SALE.
+- Si el precio es numérico y > 40 sin descuento => AVOID.
+- Si el precio es null o no se puede parsear => WAIT_FOR_SALE.
+
+Usa el sentido común y conocimiento de mercado, pero prioriza las reglas anteriores al decidir. Responde los valores del JSON en español dentro de los campos (ej. "summary" en español).
+''';
+
+          final resp = await dio.post(
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$geminiKey',
+            data: {
+              'contents': [
+                {
+                  'parts': [
+                    {'text': prompt},
+                  ],
+                },
+              ],
+              // Lower temperature for more deterministic JSON output
+              'temperature': 0.0,
+            },
+            options: Options(headers: {'Content-Type': 'application/json'}),
+          );
+
+          if (resp.statusCode == 200 && resp.data != null) {
+            final raw = resp.data;
+            final text =
+                raw['candidates']?[0]?['content']?['parts']?[0]?['text'];
+            if (text != null) {
+              try {
+                final decoded = json.decode(text) as Map<String, dynamic>;
+                return decoded;
+              } catch (decErr) {
+                print('Gemini returned non-JSON or could not parse: $decErr');
+                // fallthrough to other methods
+              }
+            }
+          }
+        } catch (gemErr) {
+          print('Direct Gemini analyze failed: $gemErr');
+          // fallthrough to supabase/scraper fallback
+        }
+      }
+
       // Usar Supabase Edge Function para análisis
       final supabase = Supabase.instance.client;
 

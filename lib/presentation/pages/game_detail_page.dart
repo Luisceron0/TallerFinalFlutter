@@ -668,11 +668,24 @@ class _GameDetailPageState extends State<GameDetailPage> {
         return;
       }
 
+      // Prefer the steam price available in the freshest game data (_gameData) or widget.game
+      double? steamPriceNum;
+      try {
+        final p =
+            (_gameData?.prices ?? widget.game.prices) as Map<String, dynamic>?;
+        final steamEntry = p != null ? (p['steam'] ?? p['Steam']) : null;
+        final raw = steamEntry is Map ? steamEntry['price'] : steamEntry;
+        if (raw is num)
+          steamPriceNum = raw.toDouble();
+        else if (raw is String)
+          steamPriceNum = double.tryParse(raw.replaceAll(',', '.'));
+      } catch (_) {}
+
       final analysis = await Get.find<GeminiAIService>()
           .analyzePurchaseDecision(
             gameTitle: widget.game.title,
-            steamPrice: widget.game.prices?['steam']?['price'],
-            epicPrice: widget.game.prices?['epic']?['price'],
+            steamPrice: steamPriceNum,
+            epicPrice: null, // Ignoramos Epic según lo solicitado
             userId: user.id,
           );
 
