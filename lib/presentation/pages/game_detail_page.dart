@@ -57,16 +57,23 @@ class _GameDetailPageState extends State<GameDetailPage> {
 
           // If scraper found a richer result it sets _gameData; otherwise keep repository result
           if (_gameData == null) {
-            setState(() {
-              _gameData = gameData;
-            });
+            if (mounted) {
+              setState(() {
+                _gameData = gameData;
+              });
+            }
+            // If widget got removed while awaiting scraper, avoid further work
+            if (!mounted) return;
             // Try to fetch Steam price as last resort
             await _fetchSteamPriceAndUpdate();
           }
         } else {
-          setState(() {
-            _gameData = gameData;
-          });
+          if (mounted) {
+            setState(() {
+              _gameData = gameData;
+            });
+          }
+          if (!mounted) return;
           // Enrich with Steam API if needed
           await _fetchSteamPriceAndUpdate();
         }
@@ -79,7 +86,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
       // Try to fetch prices from scraper API as fallback
       await _fetchPricesFromScraper();
     } finally {
-      setState(() => _isLoadingGame = false);
+      if (mounted) setState(() => _isLoadingGame = false);
     }
   }
 
@@ -112,9 +119,13 @@ class _GameDetailPageState extends State<GameDetailPage> {
         );
 
         // Always set matching game, we'll try to enrich if prices are missing
-        setState(() {
-          _gameData = matchingGame;
-        });
+        if (mounted) {
+          setState(() {
+            _gameData = matchingGame;
+          });
+        }
+        // If widget disposed while awaiting, stop
+        if (!mounted) return;
         // Try to enrich with Steam API price if available
         await _fetchSteamPriceAndUpdate();
       }
@@ -148,17 +159,20 @@ class _GameDetailPageState extends State<GameDetailPage> {
             final match = results.first;
             if (match.prices != null && match.prices!.isNotEmpty) {
               final src = match.prices as Map<String, dynamic>;
-              setState(() {
-                // merge into _gameData
-                try {
-                  final base = (_gameData ?? widget.game) as dynamic;
-                  final updated = base.copyWith(prices: src);
-                  _gameData = updated;
-                } catch (_) {
-                  _gameData =
-                      {...(_gameData ?? widget.game), 'prices': src} as dynamic;
-                }
-              });
+              if (mounted) {
+                setState(() {
+                  // merge into _gameData
+                  try {
+                    final base = (_gameData ?? widget.game) as dynamic;
+                    final updated = base.copyWith(prices: src);
+                    _gameData = updated;
+                  } catch (_) {
+                    _gameData =
+                        {...(_gameData ?? widget.game), 'prices': src}
+                            as dynamic;
+                  }
+                });
+              }
             }
           }
         } catch (e) {
@@ -223,16 +237,20 @@ class _GameDetailPageState extends State<GameDetailPage> {
             try {
               final base = (_gameData ?? widget.game) as dynamic;
               final updated = base.copyWith(prices: existingPrices);
-              setState(() {
-                _gameData = updated;
-              });
+              if (mounted) {
+                setState(() {
+                  _gameData = updated;
+                });
+              }
             } catch (e) {
               // Fallback: if copyWith not available, try wrapping minimal data
-              setState(() {
-                _gameData =
-                    {...(_gameData ?? widget.game), 'prices': existingPrices}
-                        as dynamic;
-              });
+              if (mounted) {
+                setState(() {
+                  _gameData =
+                      {...(_gameData ?? widget.game), 'prices': existingPrices}
+                          as dynamic;
+                });
+              }
             }
           }
         }
@@ -253,11 +271,11 @@ class _GameDetailPageState extends State<GameDetailPage> {
             .eq('game_id', widget.game.id)
             .single();
 
-        setState(() => _isInWishlist = true);
+  if (mounted) setState(() => _isInWishlist = true);
       }
     } catch (e) {
-      // Game not in wishlist
-      setState(() => _isInWishlist = false);
+  // Game not in wishlist
+  if (mounted) setState(() => _isInWishlist = false);
     }
   }
 
@@ -604,7 +622,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
   Future<void> _toggleWishlist() async {
     if (_isLoadingWishlist) return;
 
-    setState(() => _isLoadingWishlist = true);
+  setState(() => _isLoadingWishlist = true);
 
     try {
       final user = _client.auth.currentUser;
@@ -620,7 +638,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
           gameId: widget.game.id,
         );
 
-        setState(() => _isInWishlist = false);
+  if (mounted) setState(() => _isInWishlist = false);
       } else {
         // Add to wishlist using controller
         await _gameController.addToWishlist(
@@ -629,12 +647,12 @@ class _GameDetailPageState extends State<GameDetailPage> {
           targetPrice: null,
         );
 
-        setState(() => _isInWishlist = true);
+  if (mounted) setState(() => _isInWishlist = true);
       }
     } catch (e) {
       Get.snackbar('Error', 'No se pudo actualizar la wishlist: $e');
     } finally {
-      setState(() => _isLoadingWishlist = false);
+      if (mounted) setState(() => _isLoadingWishlist = false);
     }
   }
 
@@ -658,12 +676,12 @@ class _GameDetailPageState extends State<GameDetailPage> {
             userId: user.id,
           );
 
-      setState(() => _purchaseAnalysis = analysis);
+      if (mounted) setState(() => _purchaseAnalysis = analysis);
       Get.snackbar('Éxito', 'Análisis de compra completado');
     } catch (e) {
       Get.snackbar('Error', 'No se pudo analizar la compra: $e');
     } finally {
-      setState(() => _isAnalyzingPurchase = false);
+      if (mounted) setState(() => _isAnalyzingPurchase = false);
     }
   }
 

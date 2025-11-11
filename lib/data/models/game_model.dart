@@ -80,12 +80,47 @@ class GameModel extends GameEntity {
       prices = json['prices'] as Map<String, dynamic>?;
     }
 
+    // Try to infer epicSlug from prices/url if not provided explicitly
+    String? inferredEpicSlug = json['epic_slug']?.toString();
+    if ((inferredEpicSlug == null || inferredEpicSlug.isEmpty) &&
+        prices != null) {
+      try {
+        final epicEntry = prices['epic'] as Map<String, dynamic>?;
+        final epicUrl =
+            (epicEntry != null ? (epicEntry['url'] ?? epicEntry['link']) : null)
+                ?.toString();
+        if (epicUrl != null && epicUrl.isNotEmpty) {
+          final uri = Uri.tryParse(epicUrl);
+          if (uri != null) {
+            // Pick candidate slug from path segments excluding common words
+            final segments = uri.pathSegments
+                .where((s) => s.isNotEmpty)
+                .toList();
+            if (segments.isNotEmpty) {
+              // choose last meaningful segment
+              for (var seg in segments.reversed) {
+                final low = seg.toLowerCase();
+                if (low == 'home' ||
+                    low == 'store' ||
+                    low == 'product' ||
+                    low == 'en-us' ||
+                    low == 'en')
+                  continue;
+                inferredEpicSlug = seg;
+                break;
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
     return GameModel(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? 'Unknown Game',
       normalizedTitle: json['normalized_title']?.toString() ?? '',
       steamAppId: json['steam_app_id']?.toString(),
-      epicSlug: json['epic_slug']?.toString(),
+      epicSlug: inferredEpicSlug ?? json['epic_slug']?.toString(),
       description: json['description']?.toString(),
       imageUrl: json['image_url']?.toString(),
       prices: prices,

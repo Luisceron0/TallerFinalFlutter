@@ -70,9 +70,36 @@ class ScraperApiService {
         data: {'query': query, if (userId != null) 'user_id': userId},
       );
 
-      final results = response.data['results'] as List;
-      return results
-          .map((json) => GameModel.fromJson(json).toEntity())
+      // Debug: print full payload when in debug mode to diagnose missing Epic data
+      try {
+        if (ScraperConfig.isDebugMode) {
+          print('Scraper API raw response: ${response.data}');
+        }
+      } catch (_) {}
+
+      // Support multiple response shapes: { results: [...] } or direct list
+      List resultsList = [];
+      if (response.data is Map && response.data['results'] is List) {
+        resultsList = response.data['results'] as List;
+      } else if (response.data is List) {
+        resultsList = response.data as List;
+      } else if (response.data is Map && response.data['data'] is List) {
+        // some APIs wrap under 'data'
+        resultsList = response.data['data'] as List;
+      } else {
+        // unknown shape - try to coerce
+        try {
+          resultsList = List.from(response.data as Iterable);
+        } catch (_) {
+          resultsList = [];
+        }
+      }
+
+      return resultsList
+          .map(
+            (json) =>
+                GameModel.fromJson(json as Map<String, dynamic>).toEntity(),
+          )
           .toList();
     } catch (e) {
       throw Exception('Error searching games: $e');
