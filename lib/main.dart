@@ -13,6 +13,7 @@ import 'core/config/supabase_config.dart';
 import 'core/config/app_config.dart';
 import 'presentation/controllers/auth_controller.dart';
 import 'presentation/controllers/game_controller.dart';
+import 'data/services/scraper_api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,14 @@ void main() async {
     // Register global controllers
     Get.put(AuthController(), permanent: true);
     Get.put(GameController(), permanent: true);
+    // Register ScraperApiService globally so pages can Find it via Get
+    try {
+      Get.put(ScraperApiService(), permanent: true);
+    } catch (e) {
+      // If registration fails for any reason, ignore here.
+      // Pages have a fallback that will create/register the service when needed.
+      print('Warning: failed to register ScraperApiService at startup: $e');
+    }
     runApp(const MyApp());
   } catch (e) {
     // If initialization fails, show error and run app anyway

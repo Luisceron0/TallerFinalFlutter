@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../core/constants/app_colors.dart';
 import '../controllers/game_controller.dart';
 // auth_controller import not required in this page
@@ -85,7 +86,17 @@ class _GameDetailPageState extends State<GameDetailPage> {
   Future<void> _fetchPricesFromScraper() async {
     try {
       // Try to get prices directly from scraper API
-      final scraperService = Get.find<ScraperApiService>();
+      ScraperApiService scraperService;
+      try {
+        scraperService = Get.find<ScraperApiService>();
+      } catch (_) {
+        // If not registered in GetX, create and register a local instance
+        scraperService = ScraperApiService();
+        try {
+          Get.put<ScraperApiService>(scraperService);
+        } catch (_) {}
+      }
+
       final searchResults = await scraperService.searchGames(widget.game.title);
 
       if (searchResults.isNotEmpty) {
@@ -119,6 +130,44 @@ class _GameDetailPageState extends State<GameDetailPage> {
           ?.toString();
       if (steamId == null || steamId.isEmpty) return;
 
+      if (kIsWeb) {
+        // Direct Steam API calls are blocked by CORS on web. Use scraper backend instead.
+        try {
+          ScraperApiService scraperService;
+          try {
+            scraperService = Get.find<ScraperApiService>();
+          } catch (_) {
+            scraperService = ScraperApiService();
+            try {
+              Get.put<ScraperApiService>(scraperService);
+            } catch (_) {}
+          }
+
+          final results = await scraperService.searchGames(widget.game.title);
+          if (results.isNotEmpty) {
+            final match = results.first;
+            if (match.prices != null && match.prices!.isNotEmpty) {
+              final src = match.prices as Map<String, dynamic>;
+              setState(() {
+                // merge into _gameData
+                try {
+                  final base = (_gameData ?? widget.game) as dynamic;
+                  final updated = base.copyWith(prices: src);
+                  _gameData = updated;
+                } catch (_) {
+                  _gameData =
+                      {...(_gameData ?? widget.game), 'prices': src} as dynamic;
+                }
+              });
+            }
+          }
+        } catch (e) {
+          print('Error fetching Steam price via scraper backend: $e');
+        }
+        return;
+      }
+
+      // Not web: call Steam API directly
       final dio = Dio();
       final resp = await dio.get(
         'https://store.steampowered.com/api/appdetails',
@@ -257,6 +306,13 @@ class _GameDetailPageState extends State<GameDetailPage> {
       print(
         'GameDetailPage: precios no disponibles para juego="${game.title}" id=${game.id} rawPrices=${game.prices}',
       );
+
+      final encodedTitle = Uri.encodeComponent(game.title ?? '');
+      final steamSearch =
+          'https://store.steampowered.com/search/?term=$encodedTitle';
+      final epicSearch =
+          'https://www.epicgames.com/store/en-US/search?q=$encodedTitle';
+
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
@@ -265,11 +321,11 @@ class _GameDetailPageState extends State<GameDetailPage> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.primaryPurple.withOpacity(0.3)),
         ),
-        child: const Column(
+        child: Column(
           children: [
-            Icon(Icons.store, color: AppColors.primaryPurple, size: 32),
-            SizedBox(height: 8),
-            Text(
+            const Icon(Icons.store, color: AppColors.primaryPurple, size: 32),
+            const SizedBox(height: 8),
+            const Text(
               'Precios no disponibles',
               style: TextStyle(
                 fontSize: 16,
@@ -277,6 +333,46 @@ class _GameDetailPageState extends State<GameDetailPage> {
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final uri = Uri.parse(steamSearch);
+                    if (await canLaunchUrl(uri))
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                  },
+                  icon: const Icon(Icons.store, size: 18),
+                  label: const Text('Buscar en Steam'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final uri = Uri.parse(epicSearch);
+                    if (await canLaunchUrl(uri))
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                  },
+                  icon: const Icon(Icons.shopping_cart, size: 18),
+                  label: const Text('Buscar en Epic'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
