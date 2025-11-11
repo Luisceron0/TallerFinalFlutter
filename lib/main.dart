@@ -14,6 +14,7 @@ import 'core/config/app_config.dart';
 import 'presentation/controllers/auth_controller.dart';
 import 'presentation/controllers/game_controller.dart';
 import 'data/services/scraper_api_service.dart';
+import 'services/gemini_ai_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,12 @@ void main() async {
     // Register global controllers
     Get.put(AuthController(), permanent: true);
     Get.put(GameController(), permanent: true);
+    // Register GeminiAIService so pages can Find it via Get
+    try {
+      Get.put(GeminiAIService(), permanent: true);
+    } catch (e) {
+      print('Warning: failed to register GeminiAIService at startup: $e');
+    }
     // Register ScraperApiService globally so pages can Find it via Get
     try {
       Get.put(ScraperApiService(), permanent: true);
