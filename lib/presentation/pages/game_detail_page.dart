@@ -6,6 +6,7 @@ import '../controllers/game_controller.dart';
 import '../controllers/auth_controller.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../services/gemini_ai_service.dart';
+import '../../data/services/scraper_api_service.dart';
 
 class GameDetailPage extends StatefulWidget {
   final dynamic game;
@@ -44,11 +45,45 @@ class _GameDetailPageState extends State<GameDetailPage> {
         setState(() {
           _gameData = gameData;
         });
+      } else {
+        // If no data from repository, try to fetch from scraper API directly
+        await _fetchPricesFromScraper();
       }
     } catch (e) {
       print('Error loading game data: $e');
+      // Try to fetch prices from scraper API as fallback
+      await _fetchPricesFromScraper();
     } finally {
       setState(() => _isLoadingGame = false);
+    }
+  }
+
+  Future<void> _fetchPricesFromScraper() async {
+    try {
+      // Try to get prices directly from scraper API
+      final scraperService = Get.find<ScraperApiService>();
+      final searchResults = await scraperService.searchGames(widget.game.title);
+
+      if (searchResults.isNotEmpty) {
+        final matchingGame = searchResults.firstWhere(
+          (game) =>
+              game.title.toLowerCase().contains(
+                widget.game.title.toLowerCase(),
+              ) ||
+              widget.game.title.toLowerCase().contains(
+                game.title.toLowerCase(),
+              ),
+          orElse: () => searchResults.first,
+        );
+
+        if (matchingGame.prices != null && matchingGame.prices!.isNotEmpty) {
+          setState(() {
+            _gameData = matchingGame;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching prices from scraper: $e');
     }
   }
 

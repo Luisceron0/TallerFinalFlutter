@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:dio/dio.dart';
+import '../core/config/scraper_config.dart';
 
 class GeminiAIService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -77,16 +79,50 @@ class GeminiAIService {
       Responde en español.
       """;
 
-      // Usar Supabase Edge Function para chat
-      final supabase = Supabase.instance.client;
+      // Try Supabase Edge Function first
+      try {
+        final supabase = Supabase.instance.client;
+        final response = await supabase.functions.invoke(
+          'chat-response',
+          body: {'message': userMessage, 'prompt': prompt},
+        );
 
-      final response = await supabase.functions.invoke(
-        'chat-response',
-        body: {'message': userMessage, 'prompt': prompt},
+        if (response.status == 200) {
+          return response.data['response'] as String?;
+        }
+      } catch (supabaseError) {
+        print(
+          'Supabase function failed, trying direct API call: $supabaseError',
+        );
+      }
+
+      // Fallback to direct Gemini API call
+      final geminiApiKey = ScraperConfig.geminiApiKey;
+      if (geminiApiKey.isEmpty) {
+        return 'Lo siento, el servicio de IA no está disponible en este momento.';
+      }
+
+      final dio = Dio();
+      final response = await dio.post(
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=$geminiApiKey',
+        data: {
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt},
+              ],
+            },
+          ],
+        },
+        options: Options(headers: {'Content-Type': 'application/json'}),
       );
 
-      if (response.status == 200) {
-        return response.data['response'] as String?;
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final responseText =
+            data['candidates']?[0]?['content']?['parts']?[0]?['text'];
+        return responseText ??
+            'Lo siento, tuve un problema procesando tu mensaje. ¿Puedes intentarlo de nuevo?';
       }
 
       return 'Lo siento, tuve un problema procesando tu mensaje. ¿Puedes intentarlo de nuevo?';
