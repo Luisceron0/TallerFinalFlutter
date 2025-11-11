@@ -271,11 +271,11 @@ class _GameDetailPageState extends State<GameDetailPage> {
             .eq('game_id', widget.game.id)
             .single();
 
-  if (mounted) setState(() => _isInWishlist = true);
+        if (mounted) setState(() => _isInWishlist = true);
       }
     } catch (e) {
-  // Game not in wishlist
-  if (mounted) setState(() => _isInWishlist = false);
+      // Game not in wishlist
+      if (mounted) setState(() => _isInWishlist = false);
     }
   }
 
@@ -622,7 +622,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
   Future<void> _toggleWishlist() async {
     if (_isLoadingWishlist) return;
 
-  setState(() => _isLoadingWishlist = true);
+    setState(() => _isLoadingWishlist = true);
 
     try {
       final user = _client.auth.currentUser;
@@ -638,7 +638,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
           gameId: widget.game.id,
         );
 
-  if (mounted) setState(() => _isInWishlist = false);
+        if (mounted) setState(() => _isInWishlist = false);
       } else {
         // Add to wishlist using controller
         await _gameController.addToWishlist(
@@ -647,7 +647,7 @@ class _GameDetailPageState extends State<GameDetailPage> {
           targetPrice: null,
         );
 
-  if (mounted) setState(() => _isInWishlist = true);
+        if (mounted) setState(() => _isInWishlist = true);
       }
     } catch (e) {
       Get.snackbar('Error', 'No se pudo actualizar la wishlist: $e');
